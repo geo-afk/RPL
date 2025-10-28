@@ -1,0 +1,25 @@
+role admin {can:  read, write, execute, delete}
+ROLE Developer {can: read, write}
+ROLE Guest {can: read}
+
+// Define users
+USER Alice {role: Admin}
+USER Bob {role: Developer}
+USER Charlie {role: Guest}
+
+// Define resources
+RESOURCE DB_Finance {path: "/data/financial"}
+RESOURCE DB_Public {path: "/data/public"}
+RESOURCE API_Internal {path: "/api/internal"}
+
+// Policy rules
+ALLOW action: read, write ON resource: DB_Finance
+IF (time.hour > 9 AND time.hour < 17)
+
+DENY action: delete ON resource: DB_Finance
+IF (u_one.role == Guest)
+
+ALLOW action: read ON resource: DB_Public
+
+DENY action: * ON resource: API_Internal
+IF (time.hour < 6 OR time.hour > 22)
