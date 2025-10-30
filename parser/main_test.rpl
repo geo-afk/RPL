@@ -3,9 +3,9 @@ ROLE Developer {can: read, write}
 ROLE Guest {can: read}
 
 // Define users
-USER Alice {role: Admin}
-USER Bob {role: Developer}
-USER Charlie {role: Guest}
+USER Alice {role: Admin, Developer}
+USER Bob {role: Developer, Admin}
+USER Charlie {role: Guest, Developer}
 
 // Define resources
 RESOURCE DB_Finance {path: "/data/financial"}

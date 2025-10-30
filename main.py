@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-from antlr4 import FileStream, CommonTokenStream
 from app.shell.command_line import parse_rpl_file
 from app.generator.code_generator import CodeGenerator
 from app.analyzer.semantic_analyzer import SemanticAnalyzer
@@ -25,6 +24,7 @@ def compile_rpl(filename: str, output_file: str = "output_policy.py"):
     # Generate code
     generator = CodeGenerator()
     code = generator.generate(tree)
+    print(code)
     # Write output
     with open(output_file, 'w') as f:
         f.write(code)

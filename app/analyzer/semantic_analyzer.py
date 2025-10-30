@@ -1,5 +1,3 @@
-# src/semantic_analyzer.py
-
 from parsing.RPLParser import RPLParser
 from parsing.RPLParserVisitor import RPLParserVisitor
 
@@ -44,7 +42,7 @@ class SemanticAnalyzer(RPLParserVisitor):
         role_name = ctx.IDENTIFIER().getText()
 
         # Check for duplicate role
-        if role_name in self.roles:
+        if role_name in self.roles.keys():
             self.add_error(ctx, f"Role '{role_name}' already declared")
             return
 
@@ -72,21 +70,28 @@ class SemanticAnalyzer(RPLParserVisitor):
             self.add_error(ctx, f"User '{user_name}' already declared")
             return
 
-        # Extract attributes
-        attributes = {}
-        for attr_ctx in ctx.userAttributes().userAttribute():
-            key = attr_ctx.IDENTIFIER().getText()
-            value = self.visit(attr_ctx.value())
-            attributes[key] = value
 
-            # Validate role reference
-            if key == 'role' and value not in self.roles:
-                self.add_error(attr_ctx,
+        key: str = ctx.userAttributes().userAssignment().getText()
+        value: str = ctx.userAttributes().userAttribute().getText().split(",")
+        self.users[user_name] = {}
+
+        temp_keys = self.roles.copy()
+        keys = temp_keys.keys()
+        for key in keys:
+            key.capitalize()
+
+        attributes = {}
+        for role in value:
+            attributes[key] = role
+
+            if key == 'role' and value not in keys:
+                self.add_error(ctx,
                                f"User '{user_name}' references undefined role '{value}'")
 
         self.users[user_name] = attributes
         print(f"  Declared user: {user_name} with attributes: {attributes}")
         return None
+
 
     def visitResourceDeclaration(self, ctx: RPLParser.ResourceDeclarationContext):
         """Process resource declaration."""
@@ -110,7 +115,7 @@ class SemanticAnalyzer(RPLParserVisitor):
     def visitPolicyRule(self, ctx: RPLParser.PolicyRuleContext):
         """Process policy rule."""
         policy_type = ctx.policyType().getText()
-        actions = [a.getText() for a in ctx.actionList().IDENTIFIER()]
+        actions = [a.getText() for a in ctx.actionList().permission()]
         resource_ref = ctx.resourceRef().getText().strip('"\'')
 
         # Check if resource exists (if not a wildcard)

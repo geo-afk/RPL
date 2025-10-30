@@ -34,7 +34,7 @@ userAttributes
     ;
 
 userAttribute
-    : IDENTIFIER  (IDENTIFIER userAttribute)*
+    : IDENTIFIER (COMMA userAttribute)*
     ;
 
 userAssignment

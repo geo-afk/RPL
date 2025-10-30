@@ -44,7 +44,7 @@ def serializedATN():
         1,0,0,0,76,77,5,2,0,0,77,78,5,45,0,0,78,79,5,34,0,0,79,80,3,10,5,
         0,80,81,5,35,0,0,81,9,1,0,0,0,82,83,3,14,7,0,83,84,5,36,0,0,84,85,
         3,12,6,0,85,88,1,0,0,0,86,88,1,0,0,0,87,82,1,0,0,0,87,86,1,0,0,0,
-        88,11,1,0,0,0,89,94,5,45,0,0,90,91,5,45,0,0,91,93,3,12,6,0,92,90,
+        88,11,1,0,0,0,89,94,5,45,0,0,90,91,5,38,0,0,91,93,3,12,6,0,92,90,
         1,0,0,0,93,96,1,0,0,0,94,92,1,0,0,0,94,95,1,0,0,0,95,13,1,0,0,0,
         96,94,1,0,0,0,97,98,5,1,0,0,98,15,1,0,0,0,99,100,5,3,0,0,100,101,
         5,45,0,0,101,102,5,34,0,0,102,103,3,18,9,0,103,104,5,35,0,0,104,
@@ -640,11 +640,14 @@ class RPLParser ( Parser ):
             super().__init__(parent, invokingState)
             self.parser = parser
 
-        def IDENTIFIER(self, i:int=None):
+        def IDENTIFIER(self):
+            return self.getToken(RPLParser.IDENTIFIER, 0)
+
+        def COMMA(self, i:int=None):
             if i is None:
-                return self.getTokens(RPLParser.IDENTIFIER)
+                return self.getTokens(RPLParser.COMMA)
             else:
-                return self.getToken(RPLParser.IDENTIFIER, i)
+                return self.getToken(RPLParser.COMMA, i)
 
         def userAttribute(self, i:int=None):
             if i is None:
@@ -687,7 +690,7 @@ class RPLParser ( Parser ):
             while _alt!=2 and _alt!=ATN.INVALID_ALT_NUMBER:
                 if _alt==1:
                     self.state = 90
-                    self.match(RPLParser.IDENTIFIER)
+                    self.match(RPLParser.COMMA)
                     self.state = 91
                     self.userAttribute() 
                 self.state = 96
