@@ -1,16 +1,35 @@
 from typing import List
 from rich import print
 import subprocess
+import subprocess, urllib.request
 import os
 import re
 import glob
 
 # --- Configuration ---
-ANTLR_FILE = "./antlr-4.13.2-complete.jar"
+ROOT = os.path.dirname(__file__)
+JAR_NAME="antlr-4.13.2-complete.jar"
+ANTLR_JAR = os.path.join(ROOT, JAR_NAME)
 PARSER_PATTERN = r".*Parser\.g4$"
 LEXER_PATTERN = r".*Lexer\.g4$"
 PACKAGE_NAME = "parsing"
 path_to_save = os.path.join("..", PACKAGE_NAME)
+
+
+def download_jar():
+    url = f"https://www.antlr.org/download/{JAR_NAME}"
+    print("Downloading ANTLR jar from", url)
+    urllib.request.urlretrieve(url, ANTLR_JAR)
+    print("Downloaded to", ANTLR_JAR)
+
+def ensure_jar():
+    if os.path.exists(ANTLR_JAR):
+        print("Found ANTLR jar at", ANTLR_JAR)
+        return ANTLR_JAR
+    print("ANTLR jar not found at", ANTLR_JAR)
+    # try to download into ROOT
+    download_jar()
+    return "Downloaded"
 
 def check_if_exists(pattern: str, folder: str = "./") -> bool:
     """Check if any file in the folder matches the regex pattern."""
@@ -48,8 +67,8 @@ def main():
     errors: List[str] = []
 
     # Check ANTLR jar
-    if not os.path.exists(ANTLR_FILE):
-        errors.append(f"ANTLR jar not found at '{ANTLR_FILE}'")
+    if not os.path.exists(ANTLR_JAR):
+        errors.append(f"ANTLR jar not found at '{ANTLR_JAR}'")
 
     # Check parser and lexer files
     if not check_if_exists(PARSER_PATTERN):
@@ -82,7 +101,7 @@ def main():
     java_command: List[str] = [
         "java",
         "-jar",
-        ANTLR_FILE,
+        ANTLR_JAR,
         "-Dlanguage=Python3",
         "-visitor",
         "-package",
@@ -97,8 +116,14 @@ def main():
 
 
 if __name__ == "__main__":
-    success, error_message = main()
-    if success:
-        print("[green]ANTLR code generation completed successfully.[/green]")
+    download = ensure_jar()
+
+    if download == "Downloaded":
+        print("[green]ANTLR jar downloaded successfully.[/green]")
+        success, error_message = main()
+        if success:
+            print("[green]ANTLR code generation completed successfully.[/green]")
+        else:
+            print(f"[red]ANTLR code generation failed:[/red] {error_message}")
     else:
-        print(f"[red]ANTLR code generation failed:[/red] {error_message}")
+        print("[red]jar not downloaded error[/red]")

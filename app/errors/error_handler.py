@@ -2,7 +2,7 @@ from antlr4.error.ErrorListener import ErrorListener
 from antlr4.error.Errors import ParseCancellationException
 
 
-class SPLErrorListener(ErrorListener):
+class RPLErrorListener(ErrorListener):
     """
     Custom error listener that collects errors instead of printing them.
     """
