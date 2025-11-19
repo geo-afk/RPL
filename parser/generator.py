@@ -120,10 +120,11 @@ if __name__ == "__main__":
 
     if download == "Downloaded":
         print("[green]ANTLR jar downloaded successfully.[/green]")
-        success, error_message = main()
-        if success:
-            print("[green]ANTLR code generation completed successfully.[/green]")
-        else:
-            print(f"[red]ANTLR code generation failed:[/red] {error_message}")
     else:
-        print("[red]jar not downloaded error[/red]")
+        print("[red]jar downloaded already[/red]")
+
+    success, error_message = main()
+    if success:
+        print("[green]ANTLR code generation completed successfully.[/green]")
+    else:
+        print(f"[red]ANTLR code generation failed:[/red] {error_message}")

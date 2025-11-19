@@ -1,6 +1,6 @@
 parser grammar RPLParser;
-options { tokenVocab=RPLLexer; }
 
+options { tokenVocab=RPLLexer; }
 
 program
     : statement* EOF
@@ -10,40 +10,57 @@ statement
     : roleDeclaration
     | userDeclaration
     | resourceDeclaration
-    | policyRule
+    | groupDeclaration
     ;
 
-// Role declarations: ROLE Admin {can: *}
 roleDeclaration
-    : ROLE IDENTIFIER LBRACE rolePermissions RBRACE
+    : ROLE IDENTIFIER (EXTENDS IDENTIFIER)? LBRACE roleBody RBRACE
+    ;
+
+roleBody
+    : rolePermissions+
     ;
 
 rolePermissions
-    : CAN COLON permission (COMMA permission)*
+    : PERMISSIONS COLON LBRACKET permissionBlock (COMMA permissionBlock)* RBRACKET
+    | CAN COLON LBRACKET permission (COMMA permission)* RBRACKET RESOURCES COLON LBRACKET resourceList RBRACKET
     ;
 
+permissionBlock
+    : LBRACE
+        ACTIONS COLON LBRACKET actionList RBRACKET COMMA
+        RESOURCES COLON LBRACKET resourceList RBRACKET
+        (COMMA CONDITIONS COLON condition)?
+      RBRACE
+    ;
 
-// User declarations: USER JaneDoe {role: Developer}
 userDeclaration
-    : USER IDENTIFIER LBRACE userAttributes RBRACE
+    : USER IDENTIFIER LBRACE userBody RBRACE
     ;
 
-userAttributes
-    : userAssignment COLON userAttribute
-    |
+userBody
+    : userRoles?
+    | userRoles? COMMA validPeriod
+    | validPeriod
     ;
 
-userAttribute
-    : IDENTIFIER (COMMA userAttribute)*
+validPeriod
+    : validFrom COMMA validUntil
     ;
 
-userAssignment
-    : ROLE
+userRoles
+    : ROLE COLON LBRACKET IDENTIFIER (COMMA IDENTIFIER)* RBRACKET
     ;
 
-// Resource declarations: RESOURCE DB_Finance {path: /data/financial}
+validFrom  : VALID_FROM  COLON STRING ;
+validUntil : VALID_UNTIL COLON STRING ;
+
 resourceDeclaration
-    : RESOURCE IDENTIFIER LBRACE resourceAttributes RBRACE
+    : RESOURCE IDENTIFIER LBRACE resourceBody RBRACE
+    ;
+
+resourceBody
+    : resourceAttributes?
     ;
 
 resourceAttributes
@@ -54,73 +71,108 @@ resourceAttribute
     : IDENTIFIER COLON value
     ;
 
-// Policy rules: ALLOW/DENY action ON resource IF condition
-policyRule
-    : policyType ACTION COLON actionList ON RESOURCE COLON resourceRef ifClause?
+resourceList
+    : resourceRef (COMMA resourceRef)*
     ;
 
-policyType
-    : ALLOW
-    | DENY
+resourceRef
+    : IDENTIFIER (DOT (IDENTIFIER | STAR))*
+    | STRING
+    ;
+
+groupDeclaration
+    : GROUP IDENTIFIER LBRACE groupBody RBRACE
+    ;
+
+groupBody
+    : (groupMembers? (COMMA groupRoles?)? )
+    ;
+
+groupMembers
+    : MEMBERS COLON LBRACKET memberList RBRACKET
+    ;
+
+memberList
+    : IDENTIFIER (COMMA IDENTIFIER)*
+    ;
+
+groupRoles
+    : ROLE COLON LBRACKET IDENTIFIER (COMMA IDENTIFIER)* RBRACKET
     ;
 
 actionList
     : permission (COMMA permission)*
     ;
 
-
 permission
-    : READ
-    | WRITE
-    | MODIFY
-    | START
-    | STOP
-    | DEPLOY
-    | DELETE
-    | EXECUTE
-    | STAR  // Wildcard for all permissions
+    : READ | WRITE | MODIFY | START | STOP | DEPLOY | DELETE | EXECUTE | STAR
     ;
 
-resourceRef
-    : IDENTIFIER
-    | STRING
-    ;
-
-ifClause
-    : IF LPAREN condition RPAREN    # parenCondition
-    ;
-
-// Conditions with Boolean logic
 condition
-    : condition AND condition           # andCondition
-    | condition OR condition            # orCondition
-    | NOT condition                     # notCondition
-    | comparison                        # comparisonCondition
+    : orCondition
+    ;
+
+orCondition
+    : andCondition (OR andCondition)*
+    ;
+
+andCondition
+    : notCondition (AND notCondition)*
+    ;
+
+notCondition
+    : NOT notCondition
+    | primaryCondition
+    ;
+
+primaryCondition
+    : LPAREN condition RPAREN
+    | comparison
     ;
 
 comparison
     : expression comparisonOp expression
+    | expression IN LBRACKET valueList RBRACKET
+    | expression CONTAINS value
     ;
 
 comparisonOp
     : EQ | NE | LT | GT | LE | GE
     ;
 
-
 expression
-    : expression op=(STAR | DIV) expression       # multiDiv
-    | expression op=(PLUS | MINUS) expression     # addSub
-    | LPAREN expression RPAREN                    # parenExpr
-    | INTEGER                                     # integer
-    | REAL                                        # float
-    | IDENTIFIER                                  # identifier
-    | memberAccess                                # memberExpr
+    : additiveExpr
     ;
 
+additiveExpr
+    : multiplicativeExpr ((PLUS | MINUS) multiplicativeExpr)*
+    ;
 
-memberAccess
-    : IDENTIFIER DOT ROLE
-    | IDENTIFIER DOT IDENTIFIER
+multiplicativeExpr
+    : unaryExpr ((STAR | DIV) unaryExpr)*
+    ;
+
+unaryExpr
+    : PLUS unaryExpr
+    | MINUS unaryExpr
+    | primaryExpr
+    ;
+
+primaryExpr
+    : LPAREN expression RPAREN
+    | atom
+    ;
+
+atom
+    : INTEGER
+    | REAL
+    | STRING
+    | BOOLEAN
+    | qualifiedName
+    ;
+
+qualifiedName
+    : IDENTIFIER (DOT IDENTIFIER)*
     ;
 
 value
@@ -130,4 +182,9 @@ value
     | REAL
     | IDENTIFIER
     | BOOLEAN
+    | LBRACKET valueList RBRACKET
+    ;
+
+valueList
+    : value (COMMA value)*
     ;

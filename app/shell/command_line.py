@@ -3,7 +3,7 @@ from antlr4 import *
 from rich import print
 from parsing.RPLLexer import RPLLexer
 from parsing.RPLParser import RPLParser
-from app.errors.error_handler import SPLErrorListener
+from app.errors.error_handler import RPLErrorListener
 
 def parse_rpl_file(filename):
     """Parse an RPL file and return the parse tree and parser."""
@@ -12,7 +12,7 @@ def parse_rpl_file(filename):
     lexer = RPLLexer(input_stream)
     lexer.removeErrorListeners()
 
-    error_listener = SPLErrorListener()
+    error_listener = RPLErrorListener()
     lexer.addErrorListener(error_listener)
 
 

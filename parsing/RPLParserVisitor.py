@@ -24,8 +24,18 @@ class RPLParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
+    # Visit a parse tree produced by RPLParser#roleBody.
+    def visitRoleBody(self, ctx:RPLParser.RoleBodyContext):
+        return self.visitChildren(ctx)
+
+
     # Visit a parse tree produced by RPLParser#rolePermissions.
     def visitRolePermissions(self, ctx:RPLParser.RolePermissionsContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#permissionBlock.
+    def visitPermissionBlock(self, ctx:RPLParser.PermissionBlockContext):
         return self.visitChildren(ctx)
 
 
@@ -34,23 +44,38 @@ class RPLParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#userAttributes.
-    def visitUserAttributes(self, ctx:RPLParser.UserAttributesContext):
+    # Visit a parse tree produced by RPLParser#userBody.
+    def visitUserBody(self, ctx:RPLParser.UserBodyContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#userAttribute.
-    def visitUserAttribute(self, ctx:RPLParser.UserAttributeContext):
+    # Visit a parse tree produced by RPLParser#validPeriod.
+    def visitValidPeriod(self, ctx:RPLParser.ValidPeriodContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#userAssignment.
-    def visitUserAssignment(self, ctx:RPLParser.UserAssignmentContext):
+    # Visit a parse tree produced by RPLParser#userRoles.
+    def visitUserRoles(self, ctx:RPLParser.UserRolesContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#validFrom.
+    def visitValidFrom(self, ctx:RPLParser.ValidFromContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#validUntil.
+    def visitValidUntil(self, ctx:RPLParser.ValidUntilContext):
         return self.visitChildren(ctx)
 
 
     # Visit a parse tree produced by RPLParser#resourceDeclaration.
     def visitResourceDeclaration(self, ctx:RPLParser.ResourceDeclarationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#resourceBody.
+    def visitResourceBody(self, ctx:RPLParser.ResourceBodyContext):
         return self.visitChildren(ctx)
 
 
@@ -64,13 +89,38 @@ class RPLParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#policyRule.
-    def visitPolicyRule(self, ctx:RPLParser.PolicyRuleContext):
+    # Visit a parse tree produced by RPLParser#resourceList.
+    def visitResourceList(self, ctx:RPLParser.ResourceListContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#policyType.
-    def visitPolicyType(self, ctx:RPLParser.PolicyTypeContext):
+    # Visit a parse tree produced by RPLParser#resourceRef.
+    def visitResourceRef(self, ctx:RPLParser.ResourceRefContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#groupDeclaration.
+    def visitGroupDeclaration(self, ctx:RPLParser.GroupDeclarationContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#groupBody.
+    def visitGroupBody(self, ctx:RPLParser.GroupBodyContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#groupMembers.
+    def visitGroupMembers(self, ctx:RPLParser.GroupMembersContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#memberList.
+    def visitMemberList(self, ctx:RPLParser.MemberListContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#groupRoles.
+    def visitGroupRoles(self, ctx:RPLParser.GroupRolesContext):
         return self.visitChildren(ctx)
 
 
@@ -84,13 +134,8 @@ class RPLParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#resourceRef.
-    def visitResourceRef(self, ctx:RPLParser.ResourceRefContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by RPLParser#parenCondition.
-    def visitParenCondition(self, ctx:RPLParser.ParenConditionContext):
+    # Visit a parse tree produced by RPLParser#condition.
+    def visitCondition(self, ctx:RPLParser.ConditionContext):
         return self.visitChildren(ctx)
 
 
@@ -109,8 +154,8 @@ class RPLParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#comparisonCondition.
-    def visitComparisonCondition(self, ctx:RPLParser.ComparisonConditionContext):
+    # Visit a parse tree produced by RPLParser#primaryCondition.
+    def visitPrimaryCondition(self, ctx:RPLParser.PrimaryConditionContext):
         return self.visitChildren(ctx)
 
 
@@ -124,48 +169,48 @@ class RPLParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#multiDiv.
-    def visitMultiDiv(self, ctx:RPLParser.MultiDivContext):
+    # Visit a parse tree produced by RPLParser#expression.
+    def visitExpression(self, ctx:RPLParser.ExpressionContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#identifier.
-    def visitIdentifier(self, ctx:RPLParser.IdentifierContext):
+    # Visit a parse tree produced by RPLParser#additiveExpr.
+    def visitAdditiveExpr(self, ctx:RPLParser.AdditiveExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#memberExpr.
-    def visitMemberExpr(self, ctx:RPLParser.MemberExprContext):
+    # Visit a parse tree produced by RPLParser#multiplicativeExpr.
+    def visitMultiplicativeExpr(self, ctx:RPLParser.MultiplicativeExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#addSub.
-    def visitAddSub(self, ctx:RPLParser.AddSubContext):
+    # Visit a parse tree produced by RPLParser#unaryExpr.
+    def visitUnaryExpr(self, ctx:RPLParser.UnaryExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#integer.
-    def visitInteger(self, ctx:RPLParser.IntegerContext):
+    # Visit a parse tree produced by RPLParser#primaryExpr.
+    def visitPrimaryExpr(self, ctx:RPLParser.PrimaryExprContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#float.
-    def visitFloat(self, ctx:RPLParser.FloatContext):
+    # Visit a parse tree produced by RPLParser#atom.
+    def visitAtom(self, ctx:RPLParser.AtomContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#parenExpr.
-    def visitParenExpr(self, ctx:RPLParser.ParenExprContext):
-        return self.visitChildren(ctx)
-
-
-    # Visit a parse tree produced by RPLParser#memberAccess.
-    def visitMemberAccess(self, ctx:RPLParser.MemberAccessContext):
+    # Visit a parse tree produced by RPLParser#qualifiedName.
+    def visitQualifiedName(self, ctx:RPLParser.QualifiedNameContext):
         return self.visitChildren(ctx)
 
 
     # Visit a parse tree produced by RPLParser#value.
     def visitValue(self, ctx:RPLParser.ValueContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#valueList.
+    def visitValueList(self, ctx:RPLParser.ValueListContext):
         return self.visitChildren(ctx)
 
 

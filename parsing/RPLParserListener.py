@@ -35,12 +35,30 @@ class RPLParserListener(ParseTreeListener):
         pass
 
 
+    # Enter a parse tree produced by RPLParser#roleBody.
+    def enterRoleBody(self, ctx:RPLParser.RoleBodyContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#roleBody.
+    def exitRoleBody(self, ctx:RPLParser.RoleBodyContext):
+        pass
+
+
     # Enter a parse tree produced by RPLParser#rolePermissions.
     def enterRolePermissions(self, ctx:RPLParser.RolePermissionsContext):
         pass
 
     # Exit a parse tree produced by RPLParser#rolePermissions.
     def exitRolePermissions(self, ctx:RPLParser.RolePermissionsContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#permissionBlock.
+    def enterPermissionBlock(self, ctx:RPLParser.PermissionBlockContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#permissionBlock.
+    def exitPermissionBlock(self, ctx:RPLParser.PermissionBlockContext):
         pass
 
 
@@ -53,30 +71,48 @@ class RPLParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#userAttributes.
-    def enterUserAttributes(self, ctx:RPLParser.UserAttributesContext):
+    # Enter a parse tree produced by RPLParser#userBody.
+    def enterUserBody(self, ctx:RPLParser.UserBodyContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#userAttributes.
-    def exitUserAttributes(self, ctx:RPLParser.UserAttributesContext):
-        pass
-
-
-    # Enter a parse tree produced by RPLParser#userAttribute.
-    def enterUserAttribute(self, ctx:RPLParser.UserAttributeContext):
-        pass
-
-    # Exit a parse tree produced by RPLParser#userAttribute.
-    def exitUserAttribute(self, ctx:RPLParser.UserAttributeContext):
+    # Exit a parse tree produced by RPLParser#userBody.
+    def exitUserBody(self, ctx:RPLParser.UserBodyContext):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#userAssignment.
-    def enterUserAssignment(self, ctx:RPLParser.UserAssignmentContext):
+    # Enter a parse tree produced by RPLParser#validPeriod.
+    def enterValidPeriod(self, ctx:RPLParser.ValidPeriodContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#userAssignment.
-    def exitUserAssignment(self, ctx:RPLParser.UserAssignmentContext):
+    # Exit a parse tree produced by RPLParser#validPeriod.
+    def exitValidPeriod(self, ctx:RPLParser.ValidPeriodContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#userRoles.
+    def enterUserRoles(self, ctx:RPLParser.UserRolesContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#userRoles.
+    def exitUserRoles(self, ctx:RPLParser.UserRolesContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#validFrom.
+    def enterValidFrom(self, ctx:RPLParser.ValidFromContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#validFrom.
+    def exitValidFrom(self, ctx:RPLParser.ValidFromContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#validUntil.
+    def enterValidUntil(self, ctx:RPLParser.ValidUntilContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#validUntil.
+    def exitValidUntil(self, ctx:RPLParser.ValidUntilContext):
         pass
 
 
@@ -86,6 +122,15 @@ class RPLParserListener(ParseTreeListener):
 
     # Exit a parse tree produced by RPLParser#resourceDeclaration.
     def exitResourceDeclaration(self, ctx:RPLParser.ResourceDeclarationContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#resourceBody.
+    def enterResourceBody(self, ctx:RPLParser.ResourceBodyContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#resourceBody.
+    def exitResourceBody(self, ctx:RPLParser.ResourceBodyContext):
         pass
 
 
@@ -107,21 +152,66 @@ class RPLParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#policyRule.
-    def enterPolicyRule(self, ctx:RPLParser.PolicyRuleContext):
+    # Enter a parse tree produced by RPLParser#resourceList.
+    def enterResourceList(self, ctx:RPLParser.ResourceListContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#policyRule.
-    def exitPolicyRule(self, ctx:RPLParser.PolicyRuleContext):
+    # Exit a parse tree produced by RPLParser#resourceList.
+    def exitResourceList(self, ctx:RPLParser.ResourceListContext):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#policyType.
-    def enterPolicyType(self, ctx:RPLParser.PolicyTypeContext):
+    # Enter a parse tree produced by RPLParser#resourceRef.
+    def enterResourceRef(self, ctx:RPLParser.ResourceRefContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#policyType.
-    def exitPolicyType(self, ctx:RPLParser.PolicyTypeContext):
+    # Exit a parse tree produced by RPLParser#resourceRef.
+    def exitResourceRef(self, ctx:RPLParser.ResourceRefContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#groupDeclaration.
+    def enterGroupDeclaration(self, ctx:RPLParser.GroupDeclarationContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#groupDeclaration.
+    def exitGroupDeclaration(self, ctx:RPLParser.GroupDeclarationContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#groupBody.
+    def enterGroupBody(self, ctx:RPLParser.GroupBodyContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#groupBody.
+    def exitGroupBody(self, ctx:RPLParser.GroupBodyContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#groupMembers.
+    def enterGroupMembers(self, ctx:RPLParser.GroupMembersContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#groupMembers.
+    def exitGroupMembers(self, ctx:RPLParser.GroupMembersContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#memberList.
+    def enterMemberList(self, ctx:RPLParser.MemberListContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#memberList.
+    def exitMemberList(self, ctx:RPLParser.MemberListContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#groupRoles.
+    def enterGroupRoles(self, ctx:RPLParser.GroupRolesContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#groupRoles.
+    def exitGroupRoles(self, ctx:RPLParser.GroupRolesContext):
         pass
 
 
@@ -143,21 +233,12 @@ class RPLParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#resourceRef.
-    def enterResourceRef(self, ctx:RPLParser.ResourceRefContext):
+    # Enter a parse tree produced by RPLParser#condition.
+    def enterCondition(self, ctx:RPLParser.ConditionContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#resourceRef.
-    def exitResourceRef(self, ctx:RPLParser.ResourceRefContext):
-        pass
-
-
-    # Enter a parse tree produced by RPLParser#parenCondition.
-    def enterParenCondition(self, ctx:RPLParser.ParenConditionContext):
-        pass
-
-    # Exit a parse tree produced by RPLParser#parenCondition.
-    def exitParenCondition(self, ctx:RPLParser.ParenConditionContext):
+    # Exit a parse tree produced by RPLParser#condition.
+    def exitCondition(self, ctx:RPLParser.ConditionContext):
         pass
 
 
@@ -188,12 +269,12 @@ class RPLParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#comparisonCondition.
-    def enterComparisonCondition(self, ctx:RPLParser.ComparisonConditionContext):
+    # Enter a parse tree produced by RPLParser#primaryCondition.
+    def enterPrimaryCondition(self, ctx:RPLParser.PrimaryConditionContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#comparisonCondition.
-    def exitComparisonCondition(self, ctx:RPLParser.ComparisonConditionContext):
+    # Exit a parse tree produced by RPLParser#primaryCondition.
+    def exitPrimaryCondition(self, ctx:RPLParser.PrimaryConditionContext):
         pass
 
 
@@ -215,75 +296,66 @@ class RPLParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#multiDiv.
-    def enterMultiDiv(self, ctx:RPLParser.MultiDivContext):
+    # Enter a parse tree produced by RPLParser#expression.
+    def enterExpression(self, ctx:RPLParser.ExpressionContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#multiDiv.
-    def exitMultiDiv(self, ctx:RPLParser.MultiDivContext):
-        pass
-
-
-    # Enter a parse tree produced by RPLParser#identifier.
-    def enterIdentifier(self, ctx:RPLParser.IdentifierContext):
-        pass
-
-    # Exit a parse tree produced by RPLParser#identifier.
-    def exitIdentifier(self, ctx:RPLParser.IdentifierContext):
+    # Exit a parse tree produced by RPLParser#expression.
+    def exitExpression(self, ctx:RPLParser.ExpressionContext):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#memberExpr.
-    def enterMemberExpr(self, ctx:RPLParser.MemberExprContext):
+    # Enter a parse tree produced by RPLParser#additiveExpr.
+    def enterAdditiveExpr(self, ctx:RPLParser.AdditiveExprContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#memberExpr.
-    def exitMemberExpr(self, ctx:RPLParser.MemberExprContext):
-        pass
-
-
-    # Enter a parse tree produced by RPLParser#addSub.
-    def enterAddSub(self, ctx:RPLParser.AddSubContext):
-        pass
-
-    # Exit a parse tree produced by RPLParser#addSub.
-    def exitAddSub(self, ctx:RPLParser.AddSubContext):
+    # Exit a parse tree produced by RPLParser#additiveExpr.
+    def exitAdditiveExpr(self, ctx:RPLParser.AdditiveExprContext):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#integer.
-    def enterInteger(self, ctx:RPLParser.IntegerContext):
+    # Enter a parse tree produced by RPLParser#multiplicativeExpr.
+    def enterMultiplicativeExpr(self, ctx:RPLParser.MultiplicativeExprContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#integer.
-    def exitInteger(self, ctx:RPLParser.IntegerContext):
-        pass
-
-
-    # Enter a parse tree produced by RPLParser#float.
-    def enterFloat(self, ctx:RPLParser.FloatContext):
-        pass
-
-    # Exit a parse tree produced by RPLParser#float.
-    def exitFloat(self, ctx:RPLParser.FloatContext):
+    # Exit a parse tree produced by RPLParser#multiplicativeExpr.
+    def exitMultiplicativeExpr(self, ctx:RPLParser.MultiplicativeExprContext):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#parenExpr.
-    def enterParenExpr(self, ctx:RPLParser.ParenExprContext):
+    # Enter a parse tree produced by RPLParser#unaryExpr.
+    def enterUnaryExpr(self, ctx:RPLParser.UnaryExprContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#parenExpr.
-    def exitParenExpr(self, ctx:RPLParser.ParenExprContext):
+    # Exit a parse tree produced by RPLParser#unaryExpr.
+    def exitUnaryExpr(self, ctx:RPLParser.UnaryExprContext):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#memberAccess.
-    def enterMemberAccess(self, ctx:RPLParser.MemberAccessContext):
+    # Enter a parse tree produced by RPLParser#primaryExpr.
+    def enterPrimaryExpr(self, ctx:RPLParser.PrimaryExprContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#memberAccess.
-    def exitMemberAccess(self, ctx:RPLParser.MemberAccessContext):
+    # Exit a parse tree produced by RPLParser#primaryExpr.
+    def exitPrimaryExpr(self, ctx:RPLParser.PrimaryExprContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#atom.
+    def enterAtom(self, ctx:RPLParser.AtomContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#atom.
+    def exitAtom(self, ctx:RPLParser.AtomContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#qualifiedName.
+    def enterQualifiedName(self, ctx:RPLParser.QualifiedNameContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#qualifiedName.
+    def exitQualifiedName(self, ctx:RPLParser.QualifiedNameContext):
         pass
 
 
@@ -293,6 +365,15 @@ class RPLParserListener(ParseTreeListener):
 
     # Exit a parse tree produced by RPLParser#value.
     def exitValue(self, ctx:RPLParser.ValueContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#valueList.
+    def enterValueList(self, ctx:RPLParser.ValueListContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#valueList.
+    def exitValueList(self, ctx:RPLParser.ValueListContext):
         pass
 
 

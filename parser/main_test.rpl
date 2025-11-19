@@ -1,25 +1,371 @@
-role admin {can:  read, write, execute, delete}
-ROLE Developer {can: read, write}
-ROLE Guest {can: read}
 
-// Define users
-USER Alice {role: Admin, Developer}
-USER Bob {role: Developer, Admin}
-USER Charlie {role: Guest, Developer}
+ROLE Manager {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ READ, WRITE ],
+            RESOURCES: [ Report ]
+        }
+    ]
+}
 
-// Define resources
-RESOURCE DB_Finance {path: "/data/financial"}
-RESOURCE DB_Public {path: "/data/public"}
-RESOURCE API_Internal {path: "/api/internal"}
 
-// Policy rules
-ALLOW action: read, write ON resource: DB_Finance
-IF (time.hour > 9 AND time.hour < 17)
 
-DENY action: delete ON resource: DB_Finance
-IF (u_one.role == Guest)
+GROUP Engineering {
+    members: [ alice ]
+}
 
-ALLOW action: read ON resource: DB_Public
+RESOURCE Container {
+    id: 123,
+    tags: [ "blue", "fast" ]
+}
 
-DENY action: * ON resource: API_Internal
-IF (time.hour < 6 OR time.hour > 22)
+ROLE Reader extends Manager{
+    CAN: [ READ ] RESOURCES: [ File.log ]
+}
+
+ROLE SuperUser {
+    CAN: [ STAR ] RESOURCES: [ System.STAR ]
+}
+
+RESOURCE UserProfile {
+    name: "Sam",
+    age: 22,
+    meta: [ "tag1", "tag2" ]
+}
+
+GROUP QA {
+    MEMBERS: [ Jordan, Alice ],
+    ROLE: [ Tester ]
+}
+
+ROLE MobileUser {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ READ ],
+            RESOURCES: [ App.data ]
+        }
+    ]
+}
+
+ROLE DataOps {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ MODIFY ],
+            RESOURCES: [ Database ],
+            CONDITIONS: db.size > 100
+        }
+    ]
+}
+
+ROLE Analyst {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ READ ],
+            RESOURCES: [ Finance.records ],
+            CONDITIONS: person.level >= 3
+        }
+    ]
+}
+
+ROLE Reviewer {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ READ ],
+            RESOURCES: [ Document ],
+            CONDITIONS: person.department IN [ "qa", "qc" ]
+        }
+    ]
+}
+
+ROLE Ops {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ START, STOP ],
+            RESOURCES: [ Server ],
+            CONDITIONS: NOT user1 == user1
+        }
+    ]
+}
+
+ROLE Metrics {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ READ ],
+            RESOURCES: [ Metrics.cpu ],
+            CONDITIONS: (load + 10) > 50
+        }
+    ]
+}
+
+ROLE CloudUser {
+    CAN: [ DEPLOY ] RESOURCES: [ Cloud.service ]
+}
+
+USER DevA {
+    ROLE: [ Developer ],
+    VALID_FROM: "2020-01-01",
+    VALID_UNTIL: "2030-01-01"
+}
+
+RESOURCE VM {
+    os: "linux",
+    memory: 4096
+}
+
+GROUP DataTeam {
+    MEMBERS: [ Bob, Lisa ]
+}
+
+ROLE UploadUser {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ WRITE, READ ],
+            RESOURCES: [ Bucket.files ],
+            CONDITIONS: filename CONTAINS ".csv"
+        }
+    ]
+}
+
+ROLE Expression {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ READ ],
+            RESOURCES: [ Calc ],
+            CONDITIONS: (5 + 3 * 2) > 10
+        }
+    ]
+}
+
+USER Guest {
+    ROLE: [ Viewer ]
+}
+
+RESOURCE DNS {
+    domain: "example.com"
+}
+
+
+ROLE FileAdmin {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ DELETE ],
+            RESOURCES: [ File.backup ]
+        }
+    ]
+}
+
+ROLE hrStaff {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ READ, WRITE ],
+            RESOURCES: [ Employee.data ],
+            CONDITIONS: employee.status CONTAINS "active"
+        }
+    ]
+}
+
+RESOURCE Config {
+    path: "/etc/config",
+    version: 3
+}
+
+USER SystemBot {
+    ROLE: [ Automation ]
+}
+
+ROLE Audit {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ READ ],
+            RESOURCES: [ Logs.system ],
+            CONDITIONS: level IN [ "ERROR", "WARN" ]
+        }
+    ]
+}
+
+GROUP Maintainers {
+    MEMBERS: [ A, B, C ],
+    ROLE: [ Ops ]
+}
+
+RESOURCE Account {
+    balance: 1000,
+    owner: "Jordan"
+}
+
+ROLE PaymentOps {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ MODIFY ],
+            RESOURCES: [ Account ],
+            CONDITIONS: (balance - 200) >= 0
+        }
+    ]
+}
+
+ROLE AllRead {
+    CAN: [ READ ] RESOURCES: [ Data.STAR ]
+}
+
+USER Root {
+    ROLE: [ SuperUser ]
+}
+
+RESOURCE Node {
+    id: 1,
+    children: [ 2, 3, 4 ]
+}
+
+ROLE Logger {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ WRITE ],
+            RESOURCES: [ Logs.app ]
+        }
+    ]
+}
+
+GROUP Mixed {
+    MEMBERS: [ X, Y ],
+    ROLE: [ A, B ]
+}
+
+ROLE Check {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ READ ],
+            RESOURCES: [ System.check ],
+            CONDITIONS: (temp > 100 AND pressure < 50)
+        }
+    ]
+}
+
+RESOURCE Dashboard {
+    theme: "dark",
+    refresh: 60
+}
+
+ROLE APIUser {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ EXECUTE ],
+            RESOURCES: [ Api.v1.users ],
+            CONDITIONS: token.expiry > now
+        }
+    ]
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ROLE admin {
+    PERMISSIONS: [
+        {
+            ACTIONS: [READ, WRITE, DELETE],
+            RESOURCES: [db_finance.*, server_main],
+            CONDITIONS: (name == "Alice" or time < "18:00")
+        }
+    ]
+}
+
+
+ROLE manager EXTENDS admin {
+    CAN: [MODIFY, START]
+    RESOURCES: [server_main]
+}
+
+ROLE auditor {
+    CAN: [READ, EXECUTE, STAR]
+    RESOURCES: [db_finance.*, server_main]
+}
+
+// ---- Users ----
+USER Alice {
+    ROLE: [admin],
+    VALID_FROM: "2025-01-01",
+    VALID_UNTIL: "2025-12-31"
+}
+
+USER Bob {
+    ROLE: [manager]
+}
+
+// ---- Resources ----
+RESOURCE db_finance {
+    owner: "IT",
+    type: "SQL",
+    environment: "production"
+}
+
+RESOURCE server_main {
+    owner: "Ops",
+    type: "VM"
+}
+
+RESOURCE api_service {
+    checkAccess: "Auth.verify_removed"
+}
+
+// ---- Groups ----
+GROUP DevTeam {
+    MEMBERS: [Alice, Bob, Charlie],
+    ROLE: [manager]
+}
+
+
+ROLE Admin {
+    PERMISSIONS: [
+        {
+            ACTIONS: [ READ ],
+            RESOURCES: [ File ]
+        }
+    ]
+}
+
+USER Bob {
+}
+
+RESOURCE File {
+}
+
+GROUP TeamA {
+}
+
+ROLE Editor EXTENDS Writer {
+    CAN: [ WRITE, READ ] RESOURCES: [ Document ]
+}
+
+USER Jordan {
+    ROLE: [ Admin ]
+}
+
+RESOURCE Server {
+    ip: "10.0.0.1"
+}
+
+GROUP DevTeam {
+    MEMBERS: [ Alice, Bob ]
+}
+
+RESOURCE Project {
+    name: "Alpha",
+    active: true
+}

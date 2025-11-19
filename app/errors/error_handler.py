@@ -1,6 +1,5 @@
 from antlr4.error.ErrorListener import ErrorListener
-from antlr4.error.Errors import ParseCancellationException
-
+from app.models.error_response import ErrorResponse, MarkerSeverity
 
 class RPLErrorListener(ErrorListener):
     """
@@ -9,24 +8,36 @@ class RPLErrorListener(ErrorListener):
 
     def __init__(self):
         super().__init__()
-        self.errors = []
+        self.errors: list[ErrorResponse] = []
 
     def syntaxError(self, recognizer, offender_symbol, line, column, msg, e):
         """Called when a syntax error occurs."""
-        error_msg = f"Line {line}:{column} - Syntax Error: {msg}"
-        self.errors.append({
-            'line': line,
-            'column': column,
-            'message': msg,
-            'symbol': offender_symbol.text if offender_symbol else None
-        })
-        print(f"❌ {error_msg}")
+        error = ErrorResponse(
+            error_code = MarkerSeverity.Error,
+            column_number = column,
+            line_number = line,
+            message = msg
+        )
+        self.errors.append(error)
 
     def reportAmbiguity(self, recognizer, dfa, start_index, stop_index,
                         exact, ambiguity_alts, configs):
         """Called when parser detects ambiguity."""
+        token_stream = recognizer.getInputStream()
+        token = token_stream.tokens[start_index]
+
+
+        column = token.column
         msg = f"Ambiguity detected at indices {start_index}-{stop_index}"
-        self.errors.append({'type': 'ambiguity', 'message': msg})
+
+        error = ErrorResponse(
+            error_code=MarkerSeverity.Error,
+            column_number=column,
+            line_number=stop_index,
+            message=f"ambiguity: {msg}"
+        )
+
+        self.errors.append(error)
         print(f"⚠️  {msg}")
 
     def reportAttemptingFullContext(self, recognizer, dfa, start_index,
@@ -51,23 +62,9 @@ class RPLErrorListener(ErrorListener):
         report = f"Found {len(self.errors)} error(s):\n"
         for i, error in enumerate(self.errors, 1):
             if 'line' in error:
-                report += f"  {i}. Line {error['line']}:{error['column']} - "
-                report += f"{error['message']}\n"
+                report += f"  {i}. Line {error.line_number}:{error.column_number} - "
+                report += f"{error.message}\n"
             else:
-                report += f"  {i}. {error['message']}\n"
+                report += f"  {i}. {error.message}\n"
         return report
 
-
-class ThrowingErrorListener(ErrorListener):
-    """
-    Error listener that throws exceptions immediately on errors.
-    Useful for fail-fast scenarios.
-    """
-
-    def syntaxError(self, recognizer, offender_symbol, line, column, msg, e):
-        ex = ParseCancellationException(
-            f"Line {line}:{column} - {msg}"
-        )
-        ex.line = line
-        ex.column = column
-        raise ex

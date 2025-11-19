@@ -10,7 +10,7 @@ import pytest_asyncio
 from httpx import AsyncClient
 from fastapi import status
 
-from app.api.endpoint import app
+from app.api.routers.endpoint import app
 from app.tests.mocks.mock_environment import (
     MockDatabase,
     MockCache,

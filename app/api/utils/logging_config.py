@@ -8,7 +8,7 @@ def setup_logging(log_level: str = "INFO"):
     """
     Configure structured logging with structlog.
     """
-    # Configure standard logging
+
     logging.basicConfig(
         format="%(message)s",
         stream=sys.stdout,
