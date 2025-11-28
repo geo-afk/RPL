@@ -70,7 +70,7 @@ class MockLLMAnalyzer:
 
 
 class MockDatabase:
-    """Mock database for testing."""
+    """Mock client_db for testing."""
 
     def __init__(self):
         self.policies: Dict[str, Dict] = {}

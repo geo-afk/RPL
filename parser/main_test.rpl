@@ -1,4 +1,3 @@
-
 ROLE Manager {
     PERMISSIONS: [
         {
@@ -14,9 +13,15 @@ GROUP Engineering {
     members: [ alice ]
 }
 
-RESOURCE Container {
-    id: 123,
-    tags: [ "blue", "fast" ]
+resource UserDatabase {
+    path: "/databases/users",
+    type: database,
+    metadata: {
+        engine: "PostgreSQL",
+        region: "us-east-1",
+        encrypted: true,
+        backupEnabled: true
+    }
 }
 
 ROLE Reader extends Manager{
@@ -24,13 +29,16 @@ ROLE Reader extends Manager{
 }
 
 ROLE SuperUser {
-    CAN: [ STAR ] RESOURCES: [ System.STAR ]
+    CAN: [ * ] RESOURCES: [ System.* ]
 }
 
-RESOURCE UserProfile {
-    name: "Sam",
-    age: 22,
-    meta: [ "tag1", "tag2" ]
+resource PaymentAPI {
+    path: "/api/v1/payments",
+    type: api,
+    metadata: {
+        version: "1.0",
+        environment: "production"
+    }
 }
 
 GROUP QA {
@@ -51,7 +59,7 @@ ROLE DataOps {
     PERMISSIONS: [
         {
             ACTIONS: [ MODIFY ],
-            RESOURCES: [ Database ],
+            RESOURCES: [ one ],
             CONDITIONS: db.size > 100
         }
     ]
@@ -107,9 +115,14 @@ USER DevA {
     VALID_UNTIL: "2030-01-01"
 }
 
-RESOURCE VM {
-    os: "linux",
-    memory: 4096
+resource DocumentsFolder {
+    path: "/shared/documents",
+    type: folder,
+    metadata: {
+        owner: "admin",
+        size: "10GB",
+        created: "2024-01-15"
+    }
 }
 
 GROUP DataTeam {
@@ -140,8 +153,10 @@ USER Guest {
     ROLE: [ Viewer ]
 }
 
-RESOURCE DNS {
-    domain: "example.com"
+resource TempStorage {
+    path: "/tmp/storage",
+    type: folder,
+    metadata: {}
 }
 
 
@@ -164,9 +179,17 @@ ROLE hrStaff {
     ]
 }
 
-RESOURCE Config {
-    path: "/etc/config",
-    version: 3
+resource AnalyticsAPI {
+    path: "/api/analytics",
+    type: api,
+    metadata: {
+        version: "2.1.5",
+        deprecated: false,
+        maxConnections: 500,
+        supportedFormats: ["json", "xml", "csv"],
+        maintainer: "data-team",
+        documentation: "https://docs.example.com/analytics"
+    }
 }
 
 USER SystemBot {
@@ -188,10 +211,7 @@ GROUP Maintainers {
     ROLE: [ Ops ]
 }
 
-RESOURCE Account {
-    balance: 1000,
-    owner: "Jordan"
-}
+
 
 ROLE PaymentOps {
     PERMISSIONS: [
@@ -204,17 +224,14 @@ ROLE PaymentOps {
 }
 
 ROLE AllRead {
-    CAN: [ READ ] RESOURCES: [ Data.STAR ]
+    CAN: [ READ ] RESOURCES: [ Data.* ]
 }
 
 USER Root {
     ROLE: [ SuperUser ]
 }
 
-RESOURCE Node {
-    id: 1,
-    children: [ 2, 3, 4 ]
-}
+
 
 ROLE Logger {
     PERMISSIONS: [
@@ -240,34 +257,16 @@ ROLE Check {
     ]
 }
 
-RESOURCE Dashboard {
-    theme: "dark",
-    refresh: 60
-}
 
 ROLE APIUser {
     PERMISSIONS: [
         {
             ACTIONS: [ EXECUTE ],
-            RESOURCES: [ Api.v1.users ],
+            RESOURCES: [ ApiResource.v1.users ],
             CONDITIONS: token.expiry > now
         }
     ]
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -293,7 +292,7 @@ ROLE manager EXTENDS admin {
 }
 
 ROLE auditor {
-    CAN: [READ, EXECUTE, STAR]
+    CAN: [READ, EXECUTE, *]
     RESOURCES: [db_finance.*, server_main]
 }
 
@@ -308,21 +307,6 @@ USER Bob {
     ROLE: [manager]
 }
 
-// ---- Resources ----
-RESOURCE db_finance {
-    owner: "IT",
-    type: "SQL",
-    environment: "production"
-}
-
-RESOURCE server_main {
-    owner: "Ops",
-    type: "VM"
-}
-
-RESOURCE api_service {
-    checkAccess: "Auth.verify_removed"
-}
 
 // ---- Groups ----
 GROUP DevTeam {
@@ -343,8 +327,7 @@ ROLE Admin {
 USER Bob {
 }
 
-RESOURCE File {
-}
+
 
 GROUP TeamA {
 }
@@ -357,15 +340,7 @@ USER Jordan {
     ROLE: [ Admin ]
 }
 
-RESOURCE Server {
-    ip: "10.0.0.1"
-}
 
 GROUP DevTeam {
     MEMBERS: [ Alice, Bob ]
-}
-
-RESOURCE Project {
-    name: "Alpha",
-    active: true
 }

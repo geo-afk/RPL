@@ -55,19 +55,35 @@ userRoles
 validFrom  : VALID_FROM  COLON STRING ;
 validUntil : VALID_UNTIL COLON STRING ;
 
+// Enhanced resource declaration with path, type, and metadata
 resourceDeclaration
     : RESOURCE IDENTIFIER LBRACE resourceBody RBRACE
     ;
 
 resourceBody
-    : resourceAttributes?
+    : resourceProperty (COMMA resourceProperty)*
     ;
 
-resourceAttributes
-    : resourceAttribute (COMMA resourceAttribute)*
+resourceProperty
+    : PATH COLON STRING
+    | TYPE COLON resourceType
+    | METADATA COLON metadataBlock
+//    | IDENTIFIER COLON value  // Allow other custom properties for backward compatibility
     ;
 
-resourceAttribute
+resourceType
+    : API
+    | FOLDER
+    | DATABASE
+    ;
+
+// Metadata as structured key-value pairs
+metadataBlock
+    : LBRACE metadataEntry (COMMA metadataEntry)* RBRACE
+    | LBRACE RBRACE  // Allow empty metadata
+    ;
+
+metadataEntry
     : IDENTIFIER COLON value
     ;
 

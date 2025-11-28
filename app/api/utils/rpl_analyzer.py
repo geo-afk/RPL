@@ -1,80 +1,70 @@
 import asyncio
 
 import structlog
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 from antlr4 import InputStream, CommonTokenStream
-from app.analyzer.llm_analyzer import LLMSecurityAnalyzer
+from app.analyzer.llm_analyzer import LLMAnalyzer
 from app.analyzer.semantic_analyzer import SemanticAnalyzer
 from app.errors.error_handler import RPLErrorListener
 from parsing.RPLLexer import RPLLexer
 from parsing.RPLParser import RPLParser
 
-
-
 logger = structlog.get_logger(__name__)
-
-
 
 class RPLAnalyzerService:
 
 
-    def __init__(self, llm_analyzer: Optional[LLMSecurityAnalyzer] = None):
-        self.llm_analyzer = llm_analyzer or LLMSecurityAnalyzer()
+    def __init__(self):
+        self.llm_analyzer = LLMAnalyzer()
 
-
-
-    async def analyze(self, rpl_code: str, use_llm: bool = False) -> Any:
+    async def analyze(self, rpl_code: str, use_llm: bool = False) -> Dict[Any,Any]:
 
         tokens, lex_errors = await self._lexical_analysis(rpl_code)
-
-        if len(lex_errors) > 0:
+        if not tokens:
             return {"errors": lex_errors}
 
-        parse_tree, tree_string, parse_errors = await self._syntax_analysis(tokens)
 
-        if len(parse_errors) > 0:
+        parse_tree, _, parse_errors = await self._syntax_analysis(tokens)
+
+        if not parse_tree:
             return {"errors": parse_errors}
-
-        logger.info("{}", tree_string)
 
 
         semantic_result = await self._semantic_analysis(parse_tree)
 
-        if len(semantic_result.get("errors", [])) > 0:
+        errors = semantic_result.get("errors")
+        if errors:
             return {"errors": semantic_result["errors"]}
 
 
         if use_llm:
-            llm_result = await self._llm_analysis(semantic_result["symbol_table"])
+            llm_result = await self._llm_analysis(rpl_code)
             return {
-                "semantic_analysis": semantic_result,
+                "semantic_analysis": semantic_result["symbol_table"],
                 "llm_analysis": llm_result
             }
 
-        return None
+        return semantic_result
 
     @staticmethod
     async def _lexical_analysis(rpl_code: str) -> tuple:
-        logger.debug("lexical_analysis_started")
+        logger.info("lexical_analysis_started")
 
         try:
             input_stream = InputStream(rpl_code)
             lexer = RPLLexer(input_stream)
 
-            error_listener = RPLErrorListener()
             lexer.removeErrorListeners()
+            error_listener = RPLErrorListener()
             lexer.addErrorListener(error_listener)
 
             token_stream = CommonTokenStream(lexer)
             token_stream.fill()
-            logger.info("{}", token_stream.tokens)
-
-
             return token_stream, error_listener.errors
 
         except Exception as e:
-            logger.error("syntax_analysis_failed", error=str(e))
-            return None, [f"Syntax analysis failed: {str(e)}"]
+            logger.error("Lexical_analysis_failed", error=str(e))
+            return None, [f"Lexical analysis failed: {str(e)}"]
 
 
     @staticmethod
@@ -101,11 +91,12 @@ class RPLAnalyzerService:
             return None, "", [f"Syntax analysis failed: {str(e)}"]
 
 
-    async def _semantic_analysis(self, parse_tree) -> Dict[str, Any]:
+    @staticmethod
+    async def _semantic_analysis(parse_tree) -> Dict[str, Any]:
         logger.debug("semantic_analysis_started")
+        analyzer = SemanticAnalyzer()
 
         try:
-            analyzer = SemanticAnalyzer()
             analyzer.visit(parse_tree)
 
             result = {
@@ -113,31 +104,30 @@ class RPLAnalyzerService:
                     "roles": analyzer.roles,
                     "users": analyzer.users,
                     "resources": analyzer.resources,
+                    "groups": analyzer.groups,
                 },
-                "errors": analyzer.errors,
-                "warnings": analyzer.warnings
+                "errors": analyzer.validator.errors,
+                "warnings": analyzer.validator.warnings
             }
 
             return result
 
         except Exception as e:
-            logger.error("semantic_analysis_failed", error=str(e))
+            logger.error(f"semantic_analysis_failed {e.args}")
             return {
                 "symbol_table": {},
-                "errors": [f"Semantic analysis failed: {str(e)}"],
+                "errors": [f"Semantic analysis failed: {e}"],
                 "warnings": []
             }
 
 
-    async def _llm_analysis(self, symbol_table: Dict[str, Any]) -> Dict[str, Any]:
+    async def _llm_analysis(self, rpl_code: str) -> Dict[str, Any]:
         logger.debug("llm_analysis_started")
 
         try:
             findings = await asyncio.to_thread(
-                self.llm_analyzer.analyze_policies,
-                symbol_table.get("policies", []),
-                symbol_table.get("roles", {}),
-                symbol_table.get("resources", {})
+                self.llm_analyzer.security_policy_analysis,
+                rpl_code
             )
 
             if findings:

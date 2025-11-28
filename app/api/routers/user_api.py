@@ -1,58 +1,65 @@
+from datetime import datetime
+
+from pydantic import BaseModel
+
+from app.api.database.database import DatabaseHandler
+from app.api.services.auth_service import user_details_handler
+from app.api.services.user_service import UserService
+from fastapi import APIRouter, Depends, status
+
+from app.models.auth_models import UserDetails
+from app.models.user import User
 from typing import Annotated
-from fastapi.security import OAuth2PasswordRequestForm
-from app.api.services.user_service import (
-    create_access_token,
-    authenticate_user,
-    user_auth_handler,
-    user_dependency,
-    DatabaseHandler,
-    bcrypt_context,
-    token_handler
-)
-from app.models.auth_models import Token, UserAuth
-from fastapi import APIRouter, Depends, HTTPException
-from starlette import status
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["auth"],
+
+user_router = APIRouter(
+    prefix="/user",
+    tags=["User"],
 )
 
 
-@router.post(
-    "/register/user",
+class UserResponse(BaseModel):
+    message: str
+
+def get_user_service() -> UserService:
+    return UserService()
+
+
+@user_router.get(
+    "/all",
+    status_code=status.HTTP_200_OK,
+    response_model=list[User],
+    summary="Get List of Users",
+    description="Returns all users from the client_db.",
+    tags=["Users"]
+)
+async def receive_users(
+    service: Annotated[UserService, Depends(get_user_service)]
+):
+    return await service.get_users()
+
+
+
+@user_router.post(
+    "/save/user-details",
     status_code=status.HTTP_201_CREATED,
-    response_model=map,
-    summary="Register user with authentication",
+    response_model=UserResponse,
+    summary="Save user with authentication",
     description="Create user authentication credentials"
 )
-async def create_user_auth(user_auth: UserAuth, db: DatabaseHandler[UserAuth] = Depends(user_auth_handler)):
+async def create_user_details(user_details: UserDetails, db: DatabaseHandler[UserDetails] = Depends(user_details_handler)):
 
-    user_auth_construct = UserAuth(
-        username=user_auth.username,
-        password_hash = bcrypt_context.hash(user_auth.password)
+    user_details_construct = UserDetails(
+        email = user_details.email,
+        first_name = user_details.first_name,
+        middle_name = user_details.middle_name,
+        last_name = user_details.last_name,
+        is_active = user_details.is_active,
+        created_at = datetime.now()
     )
 
-    saved_user = db.create(user_auth_construct)
-    return {"message": f"User authentication created successfully {saved_user}"}
+    saved_user = db.create(user_details_construct)
+    return {"message": f"User details created successfully {saved_user}"}
 
 
 
-
-@router.post("/login", response_model=Token)
-async def login_with_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: DatabaseHandler[UserAuth] = Depends(token_handler)):
-    user = authenticate_user(form_data.username, form_data.password, db)
-    if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid User credentials")
-
-    token = create_access_token(user.username, user.id)
-    return {'access_token': token, 'token_type': 'bearer'}
-
-
-@router.get("/", status_code=status.HTTP_200_OK)
-async def user_auth(user: user_dependency, db: DatabaseHandler[UserAuth] = Depends(token_handler)):
-
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid User credentials, Auth Failed")
-
-    return {"User", user}

@@ -1,25 +1,29 @@
 import structlog
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
 from starlette import status
 from starlette.requests import Request
 
+from app.api.routers.client_db_api import client_db_router
+from app.api.routers.mock_api import mock_router
+from app.api.routers.rest_explorer_api import rest_router
+from app.api.routers.rpl_editor_api import rpl_router
 from app.api.utils.config import Config
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-from app.api.routers.user_api import router
+from app.api.routers.auth_api import auth_router
+from app.api.routers.user_api import user_router
 from prometheus_client import make_asgi_app
 from app.api.database.database import init_db
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
+from fastapi.exceptions import RequestValidationError
 from app.api.utils.logging_config import setup_logging
 from app.api.utils.cache import init_cache, close_cache
-from app.api.middlewares.logging import LoggingMiddleware
-from app.api.middlewares.rate_limiting import RateLimitMiddleware
-from app.api.middlewares.error_handler import ErrorHandlingMiddleware
+from app.api.routers.resource_api import resource_router
+from app.api.routers.file_manager_api import file_manager_router
 from app.api.middlewares.metrics import PrometheusMetrics, PrometheusMiddleware
 
-# Setup structured logging
+
 setup_logging()
 logger = structlog.get_logger(__name__)
 
@@ -27,18 +31,17 @@ logger = structlog.get_logger(__name__)
 prometheus_metrics = PrometheusMetrics()
 
 
-
 @asynccontextmanager
 async def lifespan(api: FastAPI):
     """
     Lifecycle manager for startup and shutdown events.
-    Handles database connections, cache, and other resources.
+    Handles client_db connections, cache, and other resources.
     """
     # Startup
     logger.info("application_starting")
 
     try:
-        # Initialize database
+        # Initialize client_db
         await init_db()
         logger.info("database_initialized")
 
@@ -49,8 +52,6 @@ async def lifespan(api: FastAPI):
         # Initialize metrics
         prometheus_metrics.setup()
         logger.info("metrics_initialized")
-
-        logger.info("application_ready")
 
         yield  # Application is running
 
@@ -76,13 +77,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[Config().get("CLIENT_ORIGIN")],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
@@ -92,9 +87,11 @@ app.add_middleware(PrometheusMiddleware)
 app.mount("/metrics",make_asgi_app())
 
 
-app.add_middleware(LoggingMiddleware)
-app.add_middleware(RateLimitMiddleware)
-app.add_middleware(ErrorHandlingMiddleware)
+
+# app.add_middleware(CSRFMiddleware)
+# app.add_middleware(LoggingMiddleware)
+# app.add_middleware(RateLimitMiddleware)
+# app.add_middleware(ErrorHandlingMiddleware)
 
 
 
@@ -138,5 +135,21 @@ async def general_exception_handler(request: Request, exc: Exception):
         }
     )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[Config().get("CLIENT_ORIGIN")],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-app.include_router(router)
+app.include_router(file_manager_router)
+app.include_router(resource_router)
+app.include_router(user_router)
+app.include_router(auth_router)
+app.include_router(rpl_router)
+
+
+app.include_router(mock_router)
+app.include_router(rest_router)
+app.include_router(client_db_router)

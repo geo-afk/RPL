@@ -11,7 +11,7 @@ logger = structlog.get_logger(__name__)
 class LoggingMiddleware(BaseHTTPMiddleware):
     """
     Middleware for structured request/response logging.
-    Logs all incoming requests and outgoing responses.
+    Logs all incoming requests and outgoing responses in JSON format.
     """
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
@@ -21,18 +21,17 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         # Log request
         start_time = time.time()
-
         logger.info(
             "request_received",
             request_id=request_id,
             method=request.method,
             url=str(request.url),
             client_host=request.client.host if request.client else None,
-            user_agent=request.headers.get("user-agent"),
+            user_agent=request.headers.get("user-agent")
         )
 
-        # Process request
         try:
+            # Process request
             response = await call_next(request)
 
             # Calculate duration
@@ -48,7 +47,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 duration_ms=round(duration, 2)
             )
 
-            # Add request ID to response headers
+            # Add request ID and duration to response headers
             response.headers["X-Request-ID"] = request_id
             response.headers["X-Process-Time"] = str(round(duration, 2))
 
@@ -56,7 +55,6 @@ class LoggingMiddleware(BaseHTTPMiddleware):
 
         except Exception as e:
             duration = (time.time() - start_time) * 1000
-
             logger.error(
                 "request_failed",
                 request_id=request_id,
@@ -67,4 +65,3 @@ class LoggingMiddleware(BaseHTTPMiddleware):
                 exc_info=True
             )
             raise
-

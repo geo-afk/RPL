@@ -1,10 +1,13 @@
 from fastapi import APIRouter, Depends
 
-router = APIRouter()
+admin_router = APIRouter(
+    prefix="/api",
+    tags=["admin"],
+)
 
 
 
-@router.get(
+@admin_router.get(
     "/users/active",
     summary="Get Active Users",
     description="Get list of currently active users"

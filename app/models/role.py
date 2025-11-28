@@ -1,30 +1,54 @@
+from sqlmodel import SQLModel, Field, Column, JSON, Relationship
 from typing import Optional, List, Dict, Any
-from sqlmodel import SQLModel, Field, Relationship, Column, JSON
+from app.models.permission_role_link import PermissionRoleLink
+from app.models.user_role_link import UserRoleLink
 
 
 class Role(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True)
 
-    permissions: List[int] = Field(
-        sa_column=Column(JSON),  # store PermissionBlock IDs or dicts
-        default=[]
+    permissions: List["PermissionBlock"] = Relationship(
+        back_populates="roles",
+        link_model=PermissionRoleLink
     )
 
-    parent_role_id: Optional[int] = Field(default=None, foreign_key="role.id")
-    parent_role: Optional["Role"] = Relationship(back_populates="children")
-    children: List["Role"] = Relationship(back_populates="parent_role")
 
-    attributes: Dict[str, Any] = Field(sa_column=Column(JSON), default={})
+    parent_role_id: Optional[int] = Field(default=None, foreign_key="role.id")
+    parent_role: Optional["Role"] = Relationship(
+        back_populates="child_roles",
+        sa_relationship_kwargs={"remote_side": "Role.id"}
+    )
+    child_roles: List["Role"] = Relationship(
+        back_populates="parent_role"
+    )
+
+    attributes: Dict[str, Any] = Field(
+        sa_column=Column(JSON),
+        default={}
+    )
+
     line_number: int = 0
 
-    def get_all_permissions(self, registry: Dict[str, "Role"]):
-        # cannot access DB here; use stored registry (same as your original)
-        perms = self.permissions.copy()
-        if self.parent_role:
-            perms.extend(self.parent_role.permissions)
-        return perms
+    users: List["User"] = Relationship(
+        back_populates="roles",
+        link_model=UserRoleLink
+    )
 
-    def __str__(self):
-        parent = f" extends {self.parent_role.name}" if self.parent_role else ""
-        return f"Role({self.name}{parent}, {len(self.permissions)} permissions)"
+    def get_all_permissions(self, registry: Dict[str, "Role"]):
+        perms = list(self.permissions)
+
+        if self.parent_role:
+            perms.extend(self.parent_role.get_all_permissions(registry))
+
+        # Deduplicate
+        seen = set()
+        unique = []
+
+        for perm in perms:
+            if perm not in seen:
+                seen.add(perm)
+                unique.append(perm)
+
+        return unique
+

@@ -1,5 +1,5 @@
 from app.api.database.database import DatabaseHandler, next_session
-from app.models.resourse import Resource
+from app.models.resource import Resource
 from typing import Sequence
 
 

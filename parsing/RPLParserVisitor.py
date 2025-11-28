@@ -79,13 +79,23 @@ class RPLParserVisitor(ParseTreeVisitor):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#resourceAttributes.
-    def visitResourceAttributes(self, ctx:RPLParser.ResourceAttributesContext):
+    # Visit a parse tree produced by RPLParser#resourceProperty.
+    def visitResourceProperty(self, ctx:RPLParser.ResourcePropertyContext):
         return self.visitChildren(ctx)
 
 
-    # Visit a parse tree produced by RPLParser#resourceAttribute.
-    def visitResourceAttribute(self, ctx:RPLParser.ResourceAttributeContext):
+    # Visit a parse tree produced by RPLParser#resourceType.
+    def visitResourceType(self, ctx:RPLParser.ResourceTypeContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#metadataBlock.
+    def visitMetadataBlock(self, ctx:RPLParser.MetadataBlockContext):
+        return self.visitChildren(ctx)
+
+
+    # Visit a parse tree produced by RPLParser#metadataEntry.
+    def visitMetadataEntry(self, ctx:RPLParser.MetadataEntryContext):
         return self.visitChildren(ctx)
 
 

@@ -134,21 +134,39 @@ class RPLParserListener(ParseTreeListener):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#resourceAttributes.
-    def enterResourceAttributes(self, ctx:RPLParser.ResourceAttributesContext):
+    # Enter a parse tree produced by RPLParser#resourceProperty.
+    def enterResourceProperty(self, ctx:RPLParser.ResourcePropertyContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#resourceAttributes.
-    def exitResourceAttributes(self, ctx:RPLParser.ResourceAttributesContext):
+    # Exit a parse tree produced by RPLParser#resourceProperty.
+    def exitResourceProperty(self, ctx:RPLParser.ResourcePropertyContext):
         pass
 
 
-    # Enter a parse tree produced by RPLParser#resourceAttribute.
-    def enterResourceAttribute(self, ctx:RPLParser.ResourceAttributeContext):
+    # Enter a parse tree produced by RPLParser#resourceType.
+    def enterResourceType(self, ctx:RPLParser.ResourceTypeContext):
         pass
 
-    # Exit a parse tree produced by RPLParser#resourceAttribute.
-    def exitResourceAttribute(self, ctx:RPLParser.ResourceAttributeContext):
+    # Exit a parse tree produced by RPLParser#resourceType.
+    def exitResourceType(self, ctx:RPLParser.ResourceTypeContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#metadataBlock.
+    def enterMetadataBlock(self, ctx:RPLParser.MetadataBlockContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#metadataBlock.
+    def exitMetadataBlock(self, ctx:RPLParser.MetadataBlockContext):
+        pass
+
+
+    # Enter a parse tree produced by RPLParser#metadataEntry.
+    def enterMetadataEntry(self, ctx:RPLParser.MetadataEntryContext):
+        pass
+
+    # Exit a parse tree produced by RPLParser#metadataEntry.
+    def exitMetadataEntry(self, ctx:RPLParser.MetadataEntryContext):
         pass
 
 

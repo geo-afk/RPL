@@ -13,7 +13,6 @@ class RPLErrorListener(ErrorListener):
     def syntaxError(self, recognizer, offender_symbol, line, column, msg, e):
         """Called when a syntax error occurs."""
         error = ErrorResponse(
-            error_code = MarkerSeverity.Error,
             column_number = column,
             line_number = line,
             message = msg
@@ -31,7 +30,6 @@ class RPLErrorListener(ErrorListener):
         msg = f"Ambiguity detected at indices {start_index}-{stop_index}"
 
         error = ErrorResponse(
-            error_code=MarkerSeverity.Error,
             column_number=column,
             line_number=stop_index,
             message=f"ambiguity: {msg}"

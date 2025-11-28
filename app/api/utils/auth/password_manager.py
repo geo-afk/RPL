@@ -18,7 +18,7 @@ class PasswordManager:
     def verify_password(self, plain_password: str, hashed_password: str) -> bool:
 
         try:
-            is_valid, new_hash = self.pwd_hasher.verify_and_update(
+            is_valid, _ = self.pwd_hasher.verify_and_update(
                 plain_password,
                 hashed_password
             )

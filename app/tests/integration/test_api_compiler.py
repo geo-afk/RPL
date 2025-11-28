@@ -33,7 +33,7 @@ async def client():
 
 @pytest_asyncio.fixture
 async def mock_db():
-    """Create mock database."""
+    """Create mock client_db."""
     db = MockDatabase()
     await db.connect()
     yield db

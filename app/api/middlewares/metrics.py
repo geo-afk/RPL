@@ -61,10 +61,6 @@ cache_misses = Counter(
 )
 
 
-# ------------------------------------------------------------------------------
-# PrometheusMetrics class
-# ------------------------------------------------------------------------------
-
 class PrometheusMetrics:
     """Prometheus metrics collector."""
 

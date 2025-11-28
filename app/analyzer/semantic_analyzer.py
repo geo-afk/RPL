@@ -1,24 +1,19 @@
-from parsing.RPLParser import RPLParser
-from typing import List, Dict, Any, Set
+from datetime import datetime
+
+from app.api.services.roles_service import RoleService
+from app.api.validation.semantic_validation import SemanticValidation
 from parsing.RPLParserVisitor import RPLParserVisitor
-from rich import  print
+from parsing.RPLParser import RPLParser
+from typing import Dict, List, Optional, Sequence
 # models
 from app.models.role import Role
 from app.models.user import User
 from app.models.group import Group
-from app.models.resourse import Resource
+from app.models.resource import Resource, ResourceType
 from app.models.permission import PermissionBlock
 
 
 class SemanticAnalyzer(RPLParserVisitor):
-    """
-    Enhanced semantic analyzer with support for:
-    - Role inheritance
-    - User temporal validity
-    - Resource hierarchies
-    - Groups
-    - Policy validation
-    """
 
     def __init__(self):
         # Symbol tables
@@ -27,46 +22,42 @@ class SemanticAnalyzer(RPLParserVisitor):
         self.resources: Dict[str, Resource] = {}
         self.groups: Dict[str, Group] = {}
 
-        # Error tracking
-        self.errors: List[str] = []
-        self.warnings: List[str] = []
+        self.validator = SemanticValidation()
 
     def visitProgram(self, ctx: RPLParser.ProgramContext):
         """Visit all statements in the program."""
-        print("=== Starting Semantic Analysis ===\n")
 
         # First pass: collect all declarations
         for statement in ctx.statement():
             self.visit(statement)
 
-        # Validation passes
-        self.validate_role_inheritance()
-        self.validate_user_roles()
-        self.validate_group_members()
-        self.detect_circular_inheritance()
+        self.validator.get_values(self.roles, self.users, self.resources, self.groups)
+        self.validator.run_all()
 
-        # Report results
-        self.print_results()
-        print(self.get_analysis_report())
+        return len(self.validator.errors) == 0
 
-        return len(self.errors) == 0
-
-    def visitRoleDeclaration(self, ctx: RPLParser.RoleDeclarationContext):
+    def visitRoleDeclaration(self, ctx: RPLParser.RoleDeclarationContext) -> None:
         """Process role declaration with optional inheritance."""
         role_name = ctx.IDENTIFIER(0).getText()
         line_number = ctx.start.line
 
-        # Check for duplicate role
+        role_service = RoleService()
+        db_roles: Sequence[Role] = role_service.get_roles()
+        for r in db_roles:
+            self.roles[r.name] = r
+
         if role_name in self.roles:
-            self.add_error(ctx, f"Role '{role_name}' already declared at line {self.roles[role_name].line_number}")
+            self.validator.add_error(ctx,
+                                     f"Role '{role_name}' already declared at line {self.roles[role_name].line_number}")
             return None
 
-        # Check for inheritance
-        parent_role = None
+        parent: Role | None = None
         if ctx.EXTENDS():
             parent_role = ctx.IDENTIFIER(1).getText()
 
-        # Extract permissions from roleBody
+            if parent_role in self.roles:
+                parent = self.roles[parent_role]
+
         permissions = []
         if ctx.roleBody():
             for role_perms_ctx in ctx.roleBody().rolePermissions():
@@ -77,13 +68,12 @@ class SemanticAnalyzer(RPLParserVisitor):
         role = Role(
             name=role_name,
             permissions=permissions,
-            parent_role=parent_role,
+            parent_role=parent,
             attributes={},
             line_number=line_number
         )
 
         self.roles[role_name] = role
-        print(f"  ✓ {role}")
         return None
 
     def visitRolePermissions(self, ctx: RPLParser.RolePermissionsContext):
@@ -93,7 +83,7 @@ class SemanticAnalyzer(RPLParserVisitor):
         # New format: permissions: [{actions: [...], resources: [...]}]
         if ctx.PERMISSIONS():
             for perm_block_ctx in ctx.permissionBlock():
-                perm_block = self.visit(perm_block_ctx)
+                perm_block: PermissionBlock = self.visit(perm_block_ctx)
                 if perm_block:
                     permissions.append(perm_block)
 
@@ -101,7 +91,11 @@ class SemanticAnalyzer(RPLParserVisitor):
         elif ctx.CAN():
             actions = []
             for perm_ctx in ctx.permission():
-                actions.append(perm_ctx.getText().lower())
+                if perm_ctx.getText() != '*':
+                    actions.append(perm_ctx.getText().lower())
+                if perm_ctx.getText() == '*':
+                    actions.append(perm_ctx.getText())
+
 
             resources = []
             if ctx.resourceList():
@@ -135,7 +129,10 @@ class SemanticAnalyzer(RPLParserVisitor):
         """Extract list of actions."""
         actions = []
         for perm_ctx in ctx.permission():
-            actions.append(perm_ctx.getText().lower())
+            if perm_ctx.getText() == '*':
+                actions.append(perm_ctx.getText())
+            else:
+                actions.append(perm_ctx.getText().lower())
         return actions
 
     def visitResourceList(self, ctx: RPLParser.ResourceListContext):
@@ -150,7 +147,7 @@ class SemanticAnalyzer(RPLParserVisitor):
         if ctx.STRING():
             return ctx.STRING().getText().strip('"\'')
 
-        # Build identifier path (e.g., api.users.* or database.orders)
+        # Build identifier path (e.g., api.users.* or client_db.orders)
         parts = []
         for identifier in ctx.IDENTIFIER():
             parts.append(identifier.getText())
@@ -161,28 +158,41 @@ class SemanticAnalyzer(RPLParserVisitor):
 
         return '.'.join(parts)
 
-    def visitUserDeclaration(self, ctx: RPLParser.UserDeclarationContext):
+    def visitUserDeclaration(self, ctx: RPLParser.UserDeclarationContext) -> None:
         """Process user declaration."""
-        user_name = ctx.IDENTIFIER().getText()
-        line_number = ctx.start.line
+        user_name: str = ctx.IDENTIFIER().getText()
+        line_number: int = ctx.start.line
 
         if user_name in self.users:
-            self.add_error(ctx, f"User '{user_name}' already declared at line {self.users[user_name].line_number}")
+            self.validator.add_error(
+                ctx,
+                f"User '{user_name}' already declared at line {self.users[user_name].line_number}"
+            )
             return None
 
         # Extract user data
-        roles = []
-        valid_from = None
-        valid_until = None
+        roles: List[Role] = []
+        valid_from: Optional[datetime] = None
+        valid_until: Optional[datetime] = None
 
         if ctx.userBody():
             user_body = ctx.userBody()
 
             # Extract roles
             if user_body.userRoles():
-                roles = self.visit(user_body.userRoles())
+                role_names: List[str] = self.visit(user_body.userRoles())
 
-            # Extract validity period
+                role_service = RoleService()
+                db_roles: Sequence[Role] = role_service.get_roles()
+                for r in db_roles:
+                    self.roles[r.name] = r
+
+                for role_name in role_names:
+                    if role_name not in self.roles:
+                        self.validator.add_error(ctx, f"Role '{role_name}' not declared")
+                    else:
+                        roles.append(self.roles[role_name])
+
             if user_body.validPeriod():
                 valid_from, valid_until = self.visit(user_body.validPeriod())
 
@@ -196,7 +206,6 @@ class SemanticAnalyzer(RPLParserVisitor):
         )
 
         self.users[user_name] = user
-        print(f"  ✓ {user}")
         return None
 
     def visitUserRoles(self, ctx: RPLParser.UserRolesContext):
@@ -221,40 +230,95 @@ class SemanticAnalyzer(RPLParserVisitor):
         return ctx.STRING().getText().strip('"\'')
 
     def visitResourceDeclaration(self, ctx: RPLParser.ResourceDeclarationContext):
-        """Process resource declaration."""
+        """Process resource declaration with path, type, and metadata."""
         resource_name = ctx.IDENTIFIER().getText()
         line_number = ctx.start.line
 
         if resource_name in self.resources:
-            self.add_error(ctx,
-                           f"Resource '{resource_name}' already declared at line {self.resources[resource_name].line_number}")
+            self.validator.add_error(
+                ctx,
+                f"Resource '{resource_name}' already declared at line {self.resources[resource_name].line_number}"
+            )
             return None
 
-        # Extract attributes
-        attributes = {}
-        if ctx.resourceBody() and ctx.resourceBody().resourceAttributes():
-            attributes = self.visit(ctx.resourceBody().resourceAttributes())
+        # Initialize required fields
+        path: Optional[str] = None
+        resource_type: Optional[ResourceType] = None
+        metadata: Dict[str, any] = {}
 
+        # Extract resource properties
+        if ctx.resourceBody():
+            for prop_ctx in ctx.resourceBody().resourceProperty():
+                if prop_ctx.PATH():
+                    # Extract path
+                    path = self.visit(prop_ctx.value())
+
+                elif prop_ctx.TYPE():
+                    # Extract resource type
+                    type_ctx = prop_ctx.resourceType()
+                    type_text = type_ctx.getText().lower()
+
+                    try:
+                        resource_type = ResourceType(type_text)
+                    except ValueError:
+                        self.validator.add_error(
+                            ctx,
+                            f"Invalid resource type '{type_text}'. Must be one of: api, folder, database"
+                        )
+                        return None
+
+                elif prop_ctx.METADATA():
+                    # Extract metadata
+                    if prop_ctx.metadataBlock():
+                        metadata = self.visit(prop_ctx.metadataBlock())
+
+                else:
+                    # Handle legacy/custom attributes for backward compatibility
+                    key = prop_ctx.IDENTIFIER().getText()
+                    value = self.visit(prop_ctx.value())
+                    metadata[key] = value
+
+        # Validate required fields
+        if path is None:
+            self.validator.add_error(ctx, f"Resource '{resource_name}' missing required 'path' property")
+            return None
+
+        if resource_type is None:
+            self.validator.add_error(ctx, f"Resource '{resource_name}' missing required 'type' property")
+            return None
+
+        # Create resource with new structure
         resource = Resource(
             name=resource_name,
-            attributes=attributes,
-            children=[],
-            parent=None,
+            path=path,
+            resource_type=resource_type,
+            meta=metadata,
             line_number=line_number
         )
 
         self.resources[resource_name] = resource
-        print(f"  ✓ {resource}")
         return resource
 
-    def visitResourceAttributes(self, ctx: RPLParser.ResourceAttributesContext):
-        """Extract resource attributes as key-value pairs."""
-        attributes = {}
-        for attr_ctx in ctx.resourceAttribute():
-            key = attr_ctx.IDENTIFIER().getText()
-            value = self.visit(attr_ctx.value())
-            attributes[key] = value
-        return attributes
+    def visitMetadataBlock(self, ctx: RPLParser.MetadataBlockContext):
+        """Extract metadata block as key-value pairs."""
+        metadata = {}
+
+        if ctx.metadataEntry():
+            for entry_ctx in ctx.metadataEntry():
+                key = entry_ctx.IDENTIFIER().getText()
+                value = self.visit(entry_ctx.value())
+                metadata[key] = value
+
+        return metadata
+
+    # def visitResourceAttributes(self, ctx: RPLParser.ResourceAttributesContext):
+    #     """Extract resource attributes as key-value pairs (legacy support)."""
+    #     attributes = {}
+    #     for attr_ctx in ctx.resourceAttribute():
+    #         key = attr_ctx.IDENTIFIER().getText()
+    #         value = self.visit(attr_ctx.value())
+    #         attributes[key] = value
+    #     return attributes
 
     def visitGroupDeclaration(self, ctx: RPLParser.GroupDeclarationContext):
         """Process group declaration."""
@@ -262,7 +326,8 @@ class SemanticAnalyzer(RPLParserVisitor):
         line_number = ctx.start.line
 
         if group_name in self.groups:
-            self.add_error(ctx, f"Group '{group_name}' already declared at line {self.groups[group_name].line_number}")
+            self.validator.add_error(ctx,
+                                     f"Group '{group_name}' already declared at line {self.groups[group_name].line_number}")
             return None
 
         members = []
@@ -285,7 +350,6 @@ class SemanticAnalyzer(RPLParserVisitor):
         )
 
         self.groups[group_name] = group
-        print(f"  ✓ {group}")
         return None
 
     def visitGroupMembers(self, ctx: RPLParser.GroupMembersContext):
@@ -330,188 +394,3 @@ class SemanticAnalyzer(RPLParserVisitor):
         for value_ctx in ctx.value():
             values.append(self.visit(value_ctx))
         return values
-
-    # ============================================
-    # VALIDATION METHODS
-    # ============================================
-
-    def validate_role_inheritance(self):
-        """Validate role inheritance references."""
-        print("\n=== Validating Role Inheritance ===")
-        for role_name, role in self.roles.items():
-            if role.parent_role:
-                if role.parent_role not in self.roles:
-                    self.add_error(None,
-                                   f"Role '{role_name}' (line {role.line_number}) extends undefined role '{role.parent_role}'")
-
-    def validate_user_roles(self):
-        """Validate that users reference existing roles."""
-        print("\n=== Validating User Roles ===")
-        for user_name, user in self.users.items():
-            for role_name in user.roles:
-                if role_name not in self.roles:
-                    self.add_error(None,
-                                   f"User '{user_name}' (line {user.line_number}) references undefined role '{role_name}'")
-
-    def validate_group_members(self):
-        """Validate that group members exist and roles are defined."""
-        print("\n=== Validating Groups ===")
-        for group_name, group in self.groups.items():
-            # Check members
-            for member in group.members:
-                if member not in self.users:
-                    self.add_warning(None,
-                                     f"Group '{group_name}' (line {group.line_number}) references undefined user '{member}'")
-
-            # Check roles
-            for role_name in group.roles:
-                if role_name not in self.roles:
-                    self.add_error(None,
-                                   f"Group '{group_name}' (line {group.line_number}) references undefined role '{role_name}'")
-
-    def detect_circular_inheritance(self):
-        """Detect circular role inheritance."""
-        print("\n=== Checking for Circular Inheritance ===")
-
-        def has_cycle(role_name: str, visited: Set[str], path: List[str]) -> bool:
-            if role_name in visited:
-                cycle_path = " -> ".join(path + [role_name])
-                self.add_error(None, f"Circular inheritance detected: {cycle_path}")
-                return True
-
-            if role_name not in self.roles:
-                return False
-
-            role = self.roles[role_name]
-            if not role.parent_role:
-                return False
-
-            visited.add(role_name)
-            path.append(role_name)
-            result = has_cycle(role.parent_role, visited, path)
-            path.pop()
-            visited.remove(role_name)
-
-            return result
-
-        for role_name in self.roles.keys():
-            has_cycle(role_name, set(), [])
-
-    # ============================================
-    # ERROR HANDLING
-    # ============================================
-
-    def add_error(self, ctx, message: str):
-        """Add a semantic error."""
-        line = ctx.start.line if ctx else 0
-        self.errors.append(f"Line {line}: ERROR: {message}")
-
-    def add_warning(self, ctx, message: str):
-        """Add a semantic warning."""
-        line = ctx.start.line if ctx else 0
-        self.warnings.append(f"Line {line}: WARNING: {message}")
-
-    def print_results(self):
-        """Print comprehensive analysis results."""
-        print("\n" + "=" * 60)
-        print("SEMANTIC ANALYSIS RESULTS")
-        print("=" * 60)
-
-        # Summary statistics
-        print(f"\n📊 Symbol Table Summary:")
-        print(f"   Roles:       {len(self.roles)}")
-        print(f"   Users:       {len(self.users)}")
-        print(f"   Resources:   {len(self.resources)}")
-        print(f"   Groups:      {len(self.groups)}")
-
-        # Detailed breakdown
-        if self.roles:
-            print(f"\n📋 Roles:")
-            for role in self.roles.values():
-                inheritance = f" extends {role.parent_role}" if role.parent_role else ""
-                print(f"   - {role.name}{inheritance} ({len(role.permissions)} permission blocks)")
-
-        if self.users:
-            print(f"\n👤 Users:")
-            for user in self.users.values():
-                roles_str = ", ".join(user.roles)
-                validity = ""
-                if user.valid_from and user.valid_until:
-                    validity = f" (valid: {user.valid_from} to {user.valid_until})"
-                print(f"   - {user.name}: roles=[{roles_str}]{validity}")
-
-        if self.resources:
-            print(f"\n📦 Resources:")
-            for resource in self.resources.values():
-                attrs = ", ".join([f"{k}={v}" for k, v in resource.attributes.items()])
-                print(f"   - {resource.name}: {attrs}")
-
-        if self.groups:
-            print(f"\n👥 Groups:")
-            for group in self.groups.values():
-                print(f"   - {group.name}: {len(group.members)} members, roles={group.roles}")
-
-        # Errors and warnings
-        print(f"\n" + "=" * 60)
-        if self.errors:
-            print(f"❌ {len(self.errors)} ERROR(S) FOUND:")
-            for error in self.errors:
-                print(f"   {error}")
-
-        if self.warnings:
-            print(f"\n⚠️  {len(self.warnings)} WARNING(S):")
-            for warning in self.warnings:
-                print(f"   {warning}")
-
-        if not self.errors and not self.warnings:
-            print("✅ No errors or warnings found!")
-            print("   Your policy language is semantically valid.")
-
-        print("=" * 60 + "\n")
-
-    def get_analysis_report(self) -> Dict[str, Any]:
-        """Return analysis results as a structured dictionary."""
-        return {
-            'success': len(self.errors) == 0,
-            'statistics': {
-                'roles': len(self.roles),
-                'users': len(self.users),
-                'resources': len(self.resources),
-                'groups': len(self.groups)
-            },
-            'errors': self.errors,
-            'warnings': self.warnings,
-            'symbol_tables': {
-                'roles': {name: str(role) for name, role in self.roles.items()},
-                'users': {name: str(user) for name, user in self.users.items()},
-                'resources': {name: str(res) for name, res in self.resources.items()},
-                'groups': {name: str(group) for name, group in self.groups.items()}
-            }
-        }
-
-    def get_user_permissions(self, user_name: str) -> List[PermissionBlock]:
-        """Get all permissions for a user (including inherited from roles)."""
-        if user_name not in self.users:
-            return []
-
-        user = self.users[user_name]
-        return user.get_all_permissions(self.roles)
-
-    def get_role_hierarchy(self, role_name: str) -> List[str]:
-        """Get the complete inheritance hierarchy for a role."""
-        if role_name not in self.roles:
-            return []
-
-        hierarchy = [role_name]
-        current = self.roles[role_name]
-
-        while current.parent_role:
-            if current.parent_role in hierarchy:
-                # Circular reference (should be caught in validation)
-                break
-            hierarchy.append(current.parent_role)
-            if current.parent_role not in self.roles:
-                break
-            current = self.roles[current.parent_role]
-
-        return hierarchy
