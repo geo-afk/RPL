@@ -241,42 +241,37 @@ class SemanticAnalyzer(RPLParserVisitor):
             )
             return None
 
-        # Initialize required fields
         path: Optional[str] = None
         resource_type: Optional[ResourceType] = None
         metadata: Dict[str, any] = {}
 
-        # Extract resource properties
         if ctx.resourceBody():
             for prop_ctx in ctx.resourceBody().resourceProperty():
                 if prop_ctx.PATH():
-                    # Extract path
-                    path = self.visit(prop_ctx.value())
+                    # Now correctly access the STRING token directly
+                    string_token = prop_ctx.STRING()
+                    if string_token:
+                        path = string_token.getText().strip('"\'')
+                    else:
+                        self.validator.add_error(ctx, f"PATH property missing value for resource '{resource_name}'")
 
                 elif prop_ctx.TYPE():
-                    # Extract resource type
                     type_ctx = prop_ctx.resourceType()
                     type_text = type_ctx.getText().lower()
 
                     try:
                         resource_type = ResourceType(type_text)
                     except ValueError:
+                        valid_types = ', '.join([e.value for e in ResourceType])
                         self.validator.add_error(
                             ctx,
-                            f"Invalid resource type '{type_text}'. Must be one of: api, folder, database"
+                            f"Invalid resource type '{type_text}'. Must be one of: {valid_types}"
                         )
-                        return None
 
                 elif prop_ctx.METADATA():
-                    # Extract metadata
-                    if prop_ctx.metadataBlock():
-                        metadata = self.visit(prop_ctx.metadataBlock())
-
-                else:
-                    # Handle legacy/custom attributes for backward compatibility
-                    key = prop_ctx.IDENTIFIER().getText()
-                    value = self.visit(prop_ctx.value())
-                    metadata[key] = value
+                    meta_block_ctx = prop_ctx.metadataBlock()
+                    if meta_block_ctx:
+                        metadata = self.visit(meta_block_ctx)
 
         # Validate required fields
         if path is None:
@@ -287,7 +282,6 @@ class SemanticAnalyzer(RPLParserVisitor):
             self.validator.add_error(ctx, f"Resource '{resource_name}' missing required 'type' property")
             return None
 
-        # Create resource with new structure
         resource = Resource(
             name=resource_name,
             path=path,
@@ -310,15 +304,6 @@ class SemanticAnalyzer(RPLParserVisitor):
                 metadata[key] = value
 
         return metadata
-
-    # def visitResourceAttributes(self, ctx: RPLParser.ResourceAttributesContext):
-    #     """Extract resource attributes as key-value pairs (legacy support)."""
-    #     attributes = {}
-    #     for attr_ctx in ctx.resourceAttribute():
-    #         key = attr_ctx.IDENTIFIER().getText()
-    #         value = self.visit(attr_ctx.value())
-    #         attributes[key] = value
-    #     return attributes
 
     def visitGroupDeclaration(self, ctx: RPLParser.GroupDeclarationContext):
         """Process group declaration."""

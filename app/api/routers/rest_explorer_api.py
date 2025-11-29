@@ -9,7 +9,6 @@ rest_router = APIRouter(
 )
 
 
-
 @rest_router.get(
     "/api/endpoints",
     status_code=status.HTTP_201_CREATED,

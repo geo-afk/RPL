@@ -2,6 +2,8 @@ import structlog
 
 from app.api.utils.rpl_analyzer import RPLAnalyzerService
 from typing import Dict, List, Type, TypeVar, Any
+
+from app.models.llm_result import Finding
 from app.models.role import Role
 from sqlmodel import SQLModel
 from app.models.user import User
@@ -20,6 +22,11 @@ T = TypeVar("T", bound=SQLModel)
 async def save_items(model: Type[T], items: Dict[str, T]) -> List[T]:
     handler = DatabaseHandler(next_session, model)
     return handler.create_all(items.values())
+
+
+async def save_llm_findings(model: Type[T], items: List[Finding]) -> List[T]:
+    handler = DatabaseHandler(next_session, model)
+    return handler.create_all(items)
 
 
 
@@ -56,7 +63,14 @@ async def analyze_policies(code: str, use_llm: bool = False) -> Dict[str, Any] |
 
 
     if use_llm and result.get("semantic_analysis"):
-        return result
+        llm_analysis: Dict[str, Any] = result.get("llm_analysis")
+        llm_findings: List[Finding] = llm_analysis.get("findings")
+        findings = save_llm_findings(Finding, llm_findings)
+        return {
+                "findings": findings,
+                "risk_score": llm_analysis.get("risk_score"),
+        }
+
 
     return None
 

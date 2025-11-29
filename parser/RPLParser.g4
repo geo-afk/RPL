@@ -68,7 +68,6 @@ resourceProperty
     : PATH COLON STRING
     | TYPE COLON resourceType
     | METADATA COLON metadataBlock
-//    | IDENTIFIER COLON value  // Allow other custom properties for backward compatibility
     ;
 
 resourceType

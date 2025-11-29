@@ -16,7 +16,7 @@ def get_system_instruction():
         ===========================================================
         
         parser grammar RPLParser;
-        
+
         options { tokenVocab=RPLLexer; }
         
         program
@@ -72,19 +72,34 @@ def get_system_instruction():
         validFrom  : VALID_FROM  COLON STRING ;
         validUntil : VALID_UNTIL COLON STRING ;
         
+        // Enhanced resource declaration with path, type, and metadata
         resourceDeclaration
             : RESOURCE IDENTIFIER LBRACE resourceBody RBRACE
             ;
         
         resourceBody
-            : resourceAttributes?
+            : resourceProperty (COMMA resourceProperty)*
             ;
         
-        resourceAttributes
-            : resourceAttribute (COMMA resourceAttribute)*
+        resourceProperty
+            : PATH COLON STRING
+            | TYPE COLON resourceType
+            | METADATA COLON metadataBlock
             ;
         
-        resourceAttribute
+        resourceType
+            : API
+            | FOLDER
+            | DATABASE
+            ;
+        
+        // Metadata as structured key-value pairs
+        metadataBlock
+            : LBRACE metadataEntry (COMMA metadataEntry)* RBRACE
+            | LBRACE RBRACE  // Allow empty metadata
+            ;
+        
+        metadataEntry
             : IDENTIFIER COLON value
             ;
         
@@ -211,7 +226,8 @@ def get_system_instruction():
         ===========================================================
         
         lexer grammar RPLLexer;
-        
+
+        // Keywords
         ROLE : [Rr][Oo][Ll][Ee];
         USER : [Uu][Ss][Ee][Rr];
         RESOURCE : [Rr][Ee][Ss][Oo][Uu][Rr][Cc][Ee];
@@ -226,10 +242,22 @@ def get_system_instruction():
         VALID_FROM : [Vv][Aa][Ll][Ii][Dd][_][Ff][Rr][Oo][Mm];
         VALID_UNTIL : [Vv][Aa][Ll][Ii][Dd][_][Uu][Nn][Tt][Ii][Ll];
         
+        // Resource-specific keywords
+        PATH : [Pp][Aa][Tt][Hh];
+        TYPE : [Tt][Yy][Pp][Ee];
+        METADATA : [Mm][Ee][Tt][Aa][Dd][Aa][Tt][Aa];
+        
+        // Resource type literals
+        API : [Aa][Pp][Ii];
+        FOLDER : [Ff][Oo][Ll][Dd][Ee][Rr];
+        DATABASE : [Dd][Aa][Tt][Aa][Bb][Aa][Ss][Ee];
+        
+        // Logical operators
         AND : [Aa][Nn][Dd];
         OR : [Oo][Rr];
         NOT : [Nn][Oo][Tt];
         
+        // Action keywords
         READ : [Rr][Ee][Aa][Dd];
         WRITE : [Ww][Rr][Ii][Tt][Ee];
         MODIFY : [Mm][Oo][Dd][Ii][Ff][Yy];
@@ -239,8 +267,10 @@ def get_system_instruction():
         DELETE : [Dd][Ee][Ll][Ee][Tt][Ee];
         EXECUTE : [Ee][Xx][Ee][Cc][Uu][Tt][Ee];
         
-        STAR : '*' | [Ss][Tt][Aa][Rr];
+        // Special symbols
+        STAR : '*';
         
+        // Comparison operators
         EQ : '==';
         NE : '!=';
         LT : '<';
@@ -253,6 +283,7 @@ def get_system_instruction():
         IN : [Ii][Nn];
         CONTAINS : [Cc][Oo][Nn][Tt][Aa][Ii][Nn][Ss];
         
+        // Delimiters
         LBRACKET : '[';
         RBRACKET : ']';
         LPAREN : '(';
@@ -263,6 +294,7 @@ def get_system_instruction():
         COMMA : ',';
         DOT : '.';
         
+        // Literals
         BOOLEAN : 'true' | 'false';
         INTEGER : [0-9]+;
         REAL : [0-9]+ '.' [0-9]* | '.' [0-9]+;
@@ -271,6 +303,7 @@ def get_system_instruction():
         
         IDENTIFIER : [a-zA-Z_][a-zA-Z0-9_]*;
         
+        // Whitespace and comments
         WS : [ \t\r\n]+ -> skip;
         LINE_COMMENT : '//' ~[\r\n]* -> skip;
         BLOCK_COMMENT : '/*' .*? '*/' -> skip;

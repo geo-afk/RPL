@@ -1,11 +1,12 @@
 import asyncio
 
 import structlog
-from typing import Dict, Any
+from typing import Dict, Any, List
 from antlr4 import InputStream, CommonTokenStream
 from app.analyzer.llm_analyzer import LLMAnalyzer
 from app.analyzer.semantic_analyzer import SemanticAnalyzer
 from app.errors.error_handler import RPLErrorListener
+from app.models.llm_result import Finding
 from parsing.RPLLexer import RPLLexer
 from parsing.RPLParser import RPLParser
 
@@ -125,13 +126,13 @@ class RPLAnalyzerService:
         logger.debug("llm_analysis_started")
 
         try:
-            findings = await asyncio.to_thread(
+            findings: List[Finding] = await asyncio.to_thread(
                 self.llm_analyzer.security_policy_analysis,
                 rpl_code
             )
 
             if findings:
-                risk_score = sum(f.get("risk_score", 0) for f in findings) / len(findings)
+                risk_score = sum(f.risk_score for f in findings) / len(findings)
             else:
                 risk_score = 0.0
 

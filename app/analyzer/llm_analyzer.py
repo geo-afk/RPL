@@ -1,15 +1,13 @@
 import json
+from google import genai
+from google.genai import types
 from typing import List, Dict, Any
-from dotenv import load_dotenv
+
+from app.analyzer.json_to_object import JsonParser
 from app.api.utils.config import Config
 from google.genai.types import ThinkingConfig
 from app.api.utils.llm_strings import get_system_instruction, create_security_analysis_prompt
-
-load_dotenv()
-
-
-from google import genai
-from google.genai import types
+from app.models.llm_result import Finding
 
 
 class LLMAnalyzer:
@@ -84,29 +82,8 @@ class LLMAnalyzer:
         return response
 
     @staticmethod
-    def parse_response(response_text: str) -> List[Dict[str, Any]]:
-        """Parse LLM response into structured findings."""
-        try:
-            if "```json" in response_text:
-                start = response_text.find("```json") + 7
-                end = response_text.find("```", start)
-                json_text = response_text[start:end].strip()
-            elif "```" in response_text:
-                start = response_text.find("```") + 3
-                end = response_text.find("```", start)
-                json_text = response_text[start:end].strip()
-            else:
-                json_text = response_text
-            findings = json.loads(json_text)
-            return findings
-        except json.JSONDecodeError:
-            print("⚠️ Could not parse LLM response as JSON")
-            return [{
-                'line': 0,
-                'risk_score': 5,
-                'category': 'Analysis Error',
-                'description': 'Could not parse structured response',
-                'recommendation': 'Review raw LLM output',
-                'raw_output': response_text
-            }]
+    def parse_response(response_text: str) -> List[Finding]:
+        json_to_findings = JsonParser(response_text)
+        return json_to_findings.parse()
+
 

@@ -3,7 +3,6 @@ from typing import Dict, Any
 from fastapi import APIRouter
 from pydantic import BaseModel
 from starlette import status
-from starlette.websockets import WebSocket, WebSocketDisconnect
 from app.api.services.connection_manager import ConnectionManager
 from app.api.services.rpl_editor_service import analyze_policies
 
@@ -25,7 +24,6 @@ class PolicyRequest(BaseModel):
 
 
 
-# policies: str,use_llm: bool,
 @rpl_router.post(
     "/analyze",
     status_code=status.HTTP_201_CREATED,
@@ -40,7 +38,6 @@ async def analyze_code(request: PolicyRequest):
     )
 
     if result:
-        logger.info(f"Result: {result}")
         return PolicyResponse(message=result)
 
     return PolicyResponse(message={"unseen": "unseen events"})
