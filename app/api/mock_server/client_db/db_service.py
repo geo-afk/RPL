@@ -1,8 +1,7 @@
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
-
+from sqlmodel import Session
 from app.api.database.database import engine
-async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+from typing import Generator
 
-async def get_client_db():
-    async with async_session() as session:
+def get_client_db() -> Generator[Session, None, None]:
+    with Session(engine) as session:
         yield session

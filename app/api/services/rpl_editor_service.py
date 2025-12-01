@@ -1,7 +1,7 @@
 import structlog
 
 from app.api.utils.rpl_analyzer import RPLAnalyzerService
-from typing import Dict, List, Type, TypeVar, Any
+from typing import Dict, List, Type, TypeVar, Any, Coroutine, Sequence
 
 from app.models.llm_result import Finding
 from app.models.role import Role
@@ -27,6 +27,12 @@ async def save_items(model: Type[T], items: Dict[str, T]) -> List[T]:
 async def save_llm_findings(model: Type[T], items: List[Finding]) -> List[T]:
     handler = DatabaseHandler(next_session, model)
     return handler.create_all(items)
+
+
+
+async def retrieve_llm_findings(model: Type[T]) -> Sequence[SQLModel | Any]:
+    handler = DatabaseHandler(next_session, model)
+    return handler.get_all()
 
 
 
@@ -65,7 +71,7 @@ async def analyze_policies(code: str, use_llm: bool = False) -> Dict[str, Any] |
     if use_llm and result.get("semantic_analysis"):
         llm_analysis: Dict[str, Any] = result.get("llm_analysis")
         llm_findings: List[Finding] = llm_analysis.get("findings")
-        findings = save_llm_findings(Finding, llm_findings)
+        findings = await save_llm_findings(Finding, llm_findings)
         return {
                 "findings": findings,
                 "risk_score": llm_analysis.get("risk_score"),
@@ -74,3 +80,9 @@ async def analyze_policies(code: str, use_llm: bool = False) -> Dict[str, Any] |
 
     return None
 
+
+
+
+async def get_all_findings():
+    findings = await retrieve_llm_findings(Finding)
+    return findings

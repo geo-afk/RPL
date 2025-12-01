@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime, timezone
 from typing import Optional
@@ -5,6 +6,9 @@ from typing import Optional
 class Token(SQLModel, table=False):
     access_token: str
     token_type: str
+
+
+
 
 class UserDetails(SQLModel, table=True):
     __tablename__ = "user_details"

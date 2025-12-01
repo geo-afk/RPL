@@ -7,6 +7,7 @@ from app.api.routers.client_db_api import client_db_router
 from app.api.routers.mock_api import mock_router
 from app.api.routers.rest_explorer_api import rest_router
 from app.api.routers.rpl_editor_api import rpl_router
+from app.api.routers.simulation_api import simulation_router
 from app.api.utils.config import Config
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
@@ -144,6 +145,7 @@ app.add_middleware(
 )
 
 app.include_router(file_manager_router)
+app.include_router(simulation_router)
 app.include_router(resource_router)
 app.include_router(user_router)
 app.include_router(auth_router)

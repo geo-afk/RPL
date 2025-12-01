@@ -1,16 +1,11 @@
-from datetime import datetime
-
 from pydantic import BaseModel
-
-from app.api.database.database import DatabaseHandler
-from app.api.services.auth_service import user_details_handler
 from app.api.services.user_service import UserService
 from fastapi import APIRouter, Depends, status
 
-from app.models.auth_models import UserDetails
+from app.models.request import UserDetailsSaveRequest
 from app.models.user import User
 from typing import Annotated
-
+from app.api.services.auth_service import  save_users_details
 
 user_router = APIRouter(
     prefix="/user",
@@ -39,6 +34,25 @@ async def receive_users(
     return await service.get_users()
 
 
+@user_router.get(
+    "/username/check/{username}",
+    status_code=status.HTTP_200_OK,
+    response_model=bool,
+    summary="Check if username is available",
+    description="Returns true if the username if in database",
+    tags=["Users"]
+)
+async def check_username(
+        username: str,
+        service: Annotated[UserService, Depends(get_user_service)]
+):
+    user = await service.username_check(username)
+    return user is not None
+
+
+class UserDetailsWrapper(BaseModel):
+    userDetails: UserDetailsSaveRequest
+
 
 @user_router.post(
     "/save/user-details",
@@ -47,19 +61,10 @@ async def receive_users(
     summary="Save user with authentication",
     description="Create user authentication credentials"
 )
-async def create_user_details(user_details: UserDetails, db: DatabaseHandler[UserDetails] = Depends(user_details_handler)):
-
-    user_details_construct = UserDetails(
-        email = user_details.email,
-        first_name = user_details.first_name,
-        middle_name = user_details.middle_name,
-        last_name = user_details.last_name,
-        is_active = user_details.is_active,
-        created_at = datetime.now()
-    )
-
-    saved_user = db.create(user_details_construct)
-    return {"message": f"User details created successfully {saved_user}"}
-
+async def create_user_details(request: UserDetailsWrapper):
+    print(f"Request: {request}")
+    user_details = save_users_details(request.userDetails)
+    response = UserResponse(message=f"User details created successfully {user_details.id}")
+    return response
 
 

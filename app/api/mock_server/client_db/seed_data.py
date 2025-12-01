@@ -1,5 +1,5 @@
 from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlmodel.ext.asyncio.session import Session
 from .models import Transaction, Budget, Employee
 
 # -------------------
@@ -26,9 +26,9 @@ mock_employees = [
 # -------------------
 # ASYNC SEED FUNCTION
 # -------------------
-async def seed(db: AsyncSession) -> bool:
+def seed(db: Session) -> bool:
     # Check if already seeded
-    existing_txn = await db.exec(select(Transaction))
+    existing_txn = db.exec(select(Transaction))
     if existing_txn.first():
         return False  # Already seeded
 
@@ -45,5 +45,5 @@ async def seed(db: AsyncSession) -> bool:
         db.add(Employee(**e))
 
     # Commit all changes
-    await db.commit()
+    db.commit()
     return True

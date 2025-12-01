@@ -1,13 +1,13 @@
 from fastapi import Depends, HTTPException, Path, APIRouter, status
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Session
-from typing import List, Dict
-from app.api.mock_server.client_db.crud import get_rows, delete_row, update_row
+from typing import List, Dict, Tuple
+from app.api.mock_server.client_db.crud import get_rows, delete_row, update_row, get_table_details
 from app.api.mock_server.client_db.db_service import get_client_db
+from app.api.mock_server.client_db.models import RowUpdatePayload
 from app.api.mock_server.client_db.seed_data import seed
 
 
-async def ensure_seeded(db: AsyncSession = Depends(get_client_db)):
+def ensure_seeded(db: Session = Depends(get_client_db)):
     seeded = seed(db)
     if seeded:
         print("Database seeded for router!")
@@ -21,9 +21,20 @@ client_db_router = APIRouter(
     dependencies=[Depends(ensure_seeded)],
 )
 
-# -------------------
-# READ ROWS
-# -------------------
+
+
+@client_db_router.get(
+    "/databases/see/tables",
+    response_model=List[Tuple],
+    status_code=status.HTTP_200_OK,
+    summary="Get available tables and their schemas",
+    description="Retrieve details of the available tables and which schema they belong.",
+)
+async def read_rows():
+    return get_table_details()
+
+
+
 @client_db_router.get(
     "/databases/{db_key}/tables/{table_name}/rows",
     response_model=List[Dict],
@@ -46,9 +57,9 @@ async def read_rows(
         raise HTTPException(status_code=404, detail=str(e))
 
 
-# -------------------
-# UPDATE ROW
-# -------------------
+
+
+
 @client_db_router.patch(
     "/databases/{db_key}/tables/{table_name}/rows/{row_id}",
     response_model=Dict,
@@ -57,24 +68,23 @@ async def read_rows(
     description="Update a specific row in the table using a JSON dictionary of changes",
 )
 async def update_table_row(
-    updates: Dict,
-    db_key: str = Path(..., description="Database key, e.g., DB_Finance"),
-    table_name: str = Path(..., description="Table name, e.g., transactions"),
-    row_id: int = Path(..., description="ID of the row to update"),
-    db: Session = Depends(get_client_db),
+        payload: RowUpdatePayload,
+        db_key: str = Path(..., description="Database key, e.g., DB_Finance"),
+        table_name: str = Path(..., description="Table name, e.g., transactions"),
+        row_id: int = Path(..., description="ID of the row to update"),
+        db: Session = Depends(get_client_db),
 ):
     try:
-        updated_row = update_row(db, db_key, table_name, row_id, updates)
-        return {"success": True, "updated": {k: v for k, v in updated_row.__dict__.items() if k != "_sa_instance_state"}}
+        updated_row = update_row(db, db_key, table_name, row_id, payload.updates)
+        data = updated_row.model_dump() if hasattr(updated_row, "model_dump") else updated_row.dict()
+        return {"success": True, "updated": data}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
-# -------------------
-# DELETE ROW
-# -------------------
+
 @client_db_router.delete(
     "/databases/{db_key}/tables/{table_name}/rows/{row_id}",
     response_model=Dict,

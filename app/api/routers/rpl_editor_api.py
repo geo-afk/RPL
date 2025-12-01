@@ -1,10 +1,11 @@
 import structlog
-from typing import Dict, Any
-from fastapi import APIRouter
+from typing import Dict, Any, List
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from starlette import status
-from app.api.services.connection_manager import ConnectionManager
-from app.api.services.rpl_editor_service import analyze_policies
+from app.api.utils.connection_manager import ConnectionManager
+from app.api.services.rpl_editor_service import analyze_policies, get_all_findings
+from app.models.llm_result import Finding
 
 logger = structlog.get_logger(__name__)
 rpl_router = APIRouter(
@@ -41,6 +42,25 @@ async def analyze_code(request: PolicyRequest):
         return PolicyResponse(message=result)
 
     return PolicyResponse(message={"unseen": "unseen events"})
+
+
+
+
+@rpl_router.post(
+    "/insight",
+    status_code=status.HTTP_201_CREATED,
+    response_model=List[Finding],
+    summary="get all llm findings ",
+    description="Get All LLM Insights that were done from previous policy code."
+)
+async def analyze_code():
+    result = await get_all_findings()
+
+    if not result:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Could not find any AI insights")
+
+    return result
+
 
 
 

@@ -1,7 +1,6 @@
-# seed_data.py
 from datetime import datetime, timedelta
 from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlmodel.ext.asyncio.session import Session
 from app.api.mock_server.rest.mock_models import ProjectStatus, TaskStatus, TaskPriority, Project, Task
 
 # -------------------
@@ -24,8 +23,8 @@ mock_tasks = [
 ]
 
 
-async def seed(db: AsyncSession) -> bool:
-    result = await db.exec(select(Project))
+def seed(db: Session) -> bool:
+    result = db.exec(select(Project))
     if result.first():
         return False   # already seeded
 
@@ -36,7 +35,7 @@ async def seed(db: AsyncSession) -> bool:
         db.add(project)
         projects.append(project)
 
-    await db.flush()
+    db.flush()
 
     for title, desc, status, priority, proj_idx in mock_tasks:
         task = Task(
@@ -53,6 +52,6 @@ async def seed(db: AsyncSession) -> bool:
         )
         db.add(task)
 
-    await db.commit()
+    db.commit()
     return True
 

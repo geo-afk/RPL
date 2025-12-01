@@ -1,7 +1,8 @@
-from typing import Type, TypeVar
+from typing import Type, TypeVar,List
 
 from app.api.database.database import Session, DatabaseHandler, get_session, next_session
 from app.models.auth_models import UserAuth, Token, UserDetails
+from app.models.request import UserDetailsSaveRequest
 from app.models.resource import Resource
 from app.models.role import Role
 from app.models.user import User
@@ -11,10 +12,11 @@ from app.api.utils.config import Config
 
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, HTTPException, status
-from sqlmodel import select
-from datetime import timedelta
+from sqlmodel import select, update
+from datetime import timedelta, datetime
 import jwt
 
+from app.models.user_role_link import UserRoleLink
 
 # ---------------------------------------------------
 # Config (Load Once)
@@ -91,6 +93,18 @@ def authenticate_user(
     return user
 
 
+
+def update_user_with_details(user_detail_id: int, username: str):
+    query = select(User).where(User.name == username)
+
+    user_db = user_handler()
+    user: User = user_db.session.exec(query).first()
+    user.details_id = user_detail_id
+
+    _ = user_db.create(user)
+
+
+
 async def get_user_by_username(
     username: str,
     db: DatabaseHandler[User]
@@ -108,16 +122,75 @@ async def get_user_details(user: User) -> UserDetails:
         select(UserDetails).where(UserDetails.user.name == user.name)
     ).first()
 
+async def get_user_role(user: UserDetails) -> User:
+    db = DatabaseHandler(next_session, User)
+
+    return db.session.exec(
+        select(User).where(User.details_id == user.id)
+    ).first()
+
+async def get_role(role_link: UserRoleLink) -> Role:
+    db = DatabaseHandler(next_session, User)
+
+    return db.session.exec(
+        select(Role).where(Role.id == role_link.role_id)
+    ).first()
 
 
-async def create_access_token(username: str, user_id: int) -> str:
+async def get_user_role_link(user: User) -> UserRoleLink:
+    db = DatabaseHandler(next_session, User)
+
+    return db.session.exec(
+        select(UserRoleLink).where(UserRoleLink.user_id == user.id)
+    ).first()
+
+
+async def get_user_details_from_auth(user: UserAuth) -> UserDetails:
+    db = DatabaseHandler(next_session, UserDetails)
+
+    return db.session.exec(
+        select(UserDetails).where(UserDetails.id == user.details_id)
+    ).first()
+
+
+def save_user_details(user_details: UserDetails) -> UserDetails:
+    db = DatabaseHandler(next_session, UserDetails)
+    return db.create(user_details)
+
+
+def save_user_auth(user_auth: UserAuth) -> UserAuth:
+    db = DatabaseHandler(next_session, UserAuth)
+    return db.create(user_auth)
+
+
+
+def create_access_token(username: str, user_id: int) -> str:
     expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     return token_manager.create_access_token(username, user_id, expires)
 
 
-# ---------------------------------------------------
-# Current User Dependency
-# ---------------------------------------------------
+
+
+async def retrieve_user_details(user: UserAuth) -> UserDetails:
+    user_details = await get_user_details_from_auth(user)
+    return user_details
+
+
+
+async def get_role_from_db(user_detail: UserDetails) -> str:
+    user: User = await get_user_role(user_detail)
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user_role_ids: UserRoleLink = await get_user_role_link(user)
+    role: Role = await get_role(user_role_ids)
+
+    return role.name
+
+
+
+
+
 
 async def get_current_user(token: str):
 
@@ -148,3 +221,30 @@ async def get_current_user(token: str):
         )
 
 
+
+
+def save_users_details(request: UserDetailsSaveRequest) -> UserDetails:
+
+    try:
+        user_details_construct = UserDetails(
+            email=request.email,
+            first_name=request.first_name,
+            last_name=request.last_name,
+            is_active=True,
+            created_at=datetime.now()
+        )
+
+        user_details = save_user_details(user_details_construct)
+
+        print(f"Request Details: {request}")
+        user_auth_construct = UserAuth(
+            username=request.username,
+            password_hash=hash_password(request.password),
+            details_id=user_details.id
+        )
+
+        _ = save_user_auth(user_auth_construct)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    return user_details

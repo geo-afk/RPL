@@ -83,7 +83,7 @@ def extract_router_routes(router: APIRouter) -> List[RouteInfo]:
             summary = getattr(route, "summary", None)
             description = getattr(route, "description", None)
             methods = list(getattr(route, "methods", []))
-            path = (router.prefix or "") + getattr(route, "path", "")
+            path = getattr(route, "path", "")
             endpoint = route.endpoint
             endpoint_name = getattr(endpoint, "__name__", repr(endpoint))
             endpoint_module = getattr(endpoint, "__module__", "")

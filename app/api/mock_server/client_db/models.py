@@ -1,4 +1,6 @@
-from typing import Optional
+from typing import Optional, Dict, Any
+
+from pydantic import BaseModel
 from sqlmodel import SQLModel, Field
 
 
@@ -35,3 +37,7 @@ class Employee(SQLModel, table=True):
     department: str
     salary: float
     hire_date: str
+
+
+class RowUpdatePayload(BaseModel):
+    updates: Dict[str, Any]
